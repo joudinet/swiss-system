@@ -70,7 +70,8 @@
     </template>
     <footer>
       <template v-if="!over">
-        <button @click="start()" v-if="!started">Démarrer</button>
+        <button @click="start()" :disabled="teams.length === 0"
+		v-if="!started">Démarrer</button>
         <button @click="nextRound()" :disabled="missingResults"
                 v-if="started">Tour suivant</button>
       </template>
@@ -189,6 +190,12 @@ export default {
     start() {
       if (!this.teams)
         return;
+      if (this.teams.length % 2) {
+        console.log("Odd number of teams, adding a BYE team.");
+        this.name = "BYE";
+        this.score = this.teams[this.teams.length - 1].score;
+        this.addTeam();
+      }
       console.log("Start tournament. Do initial pairing according to score.");
       this.started = true;
       this.graph = [];

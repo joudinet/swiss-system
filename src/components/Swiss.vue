@@ -224,8 +224,8 @@ export default {
     },
     missingResults() {
       for (const team of this.teams)
-        if (team.matches[this.round - 1].against !== -1 &&
-                team.matches[this.round - 1].win === 0)
+        if (!team.matches || (team.matches[this.round - 1].against !== -1 &&
+                team.matches[this.round - 1].win === 0))
           return true;
       return false;
     },
@@ -275,6 +275,8 @@ export default {
       return team.matches.reduce((acc, m) => m.win === 1? ++acc : acc, 0);
     },
     goalAverage(team) {
+      if (!team.matches)
+        return 0;
       return team.matches.reduce(
         (acc, m) => acc += this.nbWins(this.teams[m.against]),
         0);
@@ -370,6 +372,7 @@ export default {
       console.log("Reset.");
       this.started = false;
       this.over = false;
+      this.finalsMode = false;
       this.teams.forEach(team => this.$delete(team, 'matches'));
       this.pairings = [];
       localStorage.setItem('started', this.started);

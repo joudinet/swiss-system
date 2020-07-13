@@ -26,7 +26,7 @@
       </div>
     </template>
     <template v-if="started">
-      <h2>Classement</h2>
+      <h2>Classement poule suisse</h2>
       <table id="ranking">
 	<thead>
           <tr>

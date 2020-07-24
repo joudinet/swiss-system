@@ -1,5 +1,5 @@
 <template>
-  <div class="swiss">  
+  <div class="swiss">
     <div class="banner"></div>
 
   <div class="sidebar">
@@ -44,13 +44,13 @@
 			<button class="all">Ajouter équipe</button>
 		</div>
 		</form>
-      
+
      <table class="team-list">
       <thead>
         <tr>
-         <th>Rang</th> 
+         <th>Rang</th>
          <th>Equipe</th>
-         <th>Action</th>               
+         <th>Action</th>
        </tr>
      </thead>
      <tbody>
@@ -58,7 +58,7 @@
         <td class="cell-align-center">{{ team.score }}</td>
         <td>{{ team.name }}</td>
         <td class="cell-align-center"><button style="float: none;" @click="removeTeam(n)" class="delete">Supprimer</button></td>
-      </tr>   
+      </tr>
     </tbody>
   </table>
 </template>
@@ -221,7 +221,7 @@
         teams: [],
         finalsMode: false,
         graph: null,
-        pairings: null,
+        pairings: [],
         semiFinals: [[{name: "Winner 1st quarterfinal"}, {name: "Winner 2nd quaterfinal"}, 0],[{name: "Winner 3rd quarterfinal"}, {name: "Winner 4th quaterfinal"}, 0]],
         finals: [[{name: "Winner 1st semifinal"}, {name: "Winner 2nd semifinal"}, 0]],
         maxRounds: 4,
@@ -543,13 +543,13 @@
     border:0;
     float: left;
   }
-  button.reset:hover, 
+  button.reset:hover,
   button.reset:focus,
   button.reset:active {
    background: #faafaf;
    color: #333;
    cursor: pointer;
- }  
+ }
 
  button.delete {
     padding: 9px 35px;
@@ -560,7 +560,7 @@
     border:0;
     float: left;
   }
-  button.delete:hover, 
+  button.delete:hover,
   button.delete:focus,
   button.delete:active {
    background: #faafaf;
@@ -576,13 +576,13 @@
   border:0;
   float: left;
 }
-button.start:hover, 
+button.start:hover,
 button.start:focus,
 button.start:active {
  background: #a6eb9b;
  color: #333;
    cursor: pointer;
-} 
+}
 button.all {
   padding: 9px 35px;
   color: #fff;
@@ -590,10 +590,10 @@ button.all {
   font-family: inherit;
   background: #1882f2;
   border:0;
-  float: left;  
-} 
+  float: left;
+}
 
-button.all:hover, 
+button.all:hover,
 button.all:focus,
 button.all:active {
  background: #9ec9f7;
@@ -608,7 +608,7 @@ button.all:active {
   border: 1px solid #e0e0e0;
   text-align:left;
   padding: 15px;
-}  
+}
 .sidebar{
  float: right;
  position: absolute;
@@ -628,7 +628,7 @@ button.all:active {
   padding-right: 5px;
   font-weight: 300;
 }
-.main-panel input:focus, 
+.main-panel input:focus,
 .main-panel input:hover,
 .main-panel input:active {
   border: 1px solid #1882f2;
@@ -656,7 +656,7 @@ button.all:active {
   border-bottom: 1px solid #ebebeb;
   text-align: center;
   vertical-align: center;
-  padding: 2px;  
+  padding: 2px;
 }
 .cell-align-center {
 	text-align: center;

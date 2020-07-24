@@ -31,15 +31,11 @@
 
       <h3>Ajout des équipes</h3>
       <form @submit.prevent="addTeam">
-        <div>
           <label for="name">Nom : </label>
           <input id="name" v-model="name" type="text" name="name" />
           <label for="score">Score : </label>
           <input id="score" v-model="score" type="number" name="score" />
-        </div>
-        <div>
           <button class="all">Ajouter équipe</button>
-        </div>
       </form>
 
       <table class="team-list">
@@ -574,7 +570,6 @@ button.all {
   font-family: inherit;
   background: #1882f2;
   border:0;
-  float: left;
 }
 
 button.all:hover,
@@ -585,9 +580,9 @@ button.all:active {
    cursor: pointer;
 }
 main {
-  width: 85%;
-  margin-right: calc(10em);
-  border: 1px solid #e0e0e0;
+    width: calc(100% - 10em - 8px);
+    margin-right: 8px;
+    border: 1px solid #e0e0e0;
 }
 aside {
     position: absolute;
@@ -596,8 +591,24 @@ aside {
     width: 10em;
     padding-right: 8px;
 }
+
+@media (max-width: 600px) {
+    main {
+	width: auto;
+	margin-right: 0;
+    }
+    aside {
+	position: static;
+	width: auto;
+	padding-right: 0;
+	height: 43px;
+    }
+    button.start {
+	float: right;
+    }
+}
+
 main input {
-  width: 200px;
   height: 10px;
   font-size: 16px;
   background: #f9f9f9;

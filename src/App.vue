@@ -17,7 +17,7 @@ export default {
 
 <style>
 #app {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Roboto', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;

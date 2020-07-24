@@ -1,211 +1,208 @@
 <template>
   <div class="swiss">  
-    <div class="banner">
+    <div class="banner"></div>
+
+  <div class="sidebar">
+    <button @click="reset" class="reset">Reset</button>
+
+    <template v-if="!over">
+      <button class="start" @click="start()" :disabled="teams.length === 0"
+      v-if="!started">Démarrer ({{ teams.length }})</button>
+      <button class="all" @click="nextRound()" :disabled="missingResults"
+      v-if="started">Tour suivant</button>
+    </template>
+    <button class="all" @click="startFinals()" :disabled="missingResults"
+    v-if="over && !finalsMode">Phases finales</button>
+  </div>
+
+  <div class="main-panel">
+    <template v-if="!started">
+      <h3>Configuration du tournoi</h3>
+      <div>
+        <label for="maxRounds">Nb. tours de poule Suisse : </label>
+        <input id="maxRounds" v-model="maxRounds" type="number" name="maxRounds" />
+    </div>
+    <div>
+        <label for="nbFields">Nb. terrains disponibles : </label>
+        <input id="nbFields" v-model="nbFields" type="number" name="nbFields" />
+    </div>
+    <div>
+        <label for="maxRounds">Durée estimée du tournoi (poules & phases finales) :
+         {{ duration }} h</label>
     </div>
 
-    <div clas="contain">
 
-      <div class="col-right">
-        <button @click="reset" class="reset">Reset</button>
-        <br /><br /><br />   
-
-        <template v-if="!over">
-          <button class="start" @click="start()" :disabled="teams.length === 0"
-          v-if="!started">Démarrer ({{ teams.length }})</button>
-          <button class="all" @click="nextRound()" :disabled="missingResults"
-          v-if="started">Tour suivant</button>
-        </template>
-        <button class="all" @click="startFinals()" :disabled="missingResults"
-        v-if="over && !finalsMode">Phases finales</button>
-      </div>
-
-      <div class="col-middle">
-        <template v-if="!started">
-          <H3>Configuration du tournoi</H3>
-          <div>
-            <label for="maxRounds">Nb. tours de poule Suisse : </label>
-            <input id="maxRounds" v-model="maxRounds" type="number" name="maxRounds" />
-            <br />
-            <label for="nbFields">Nb. terrains disponibles : </label>
-            <input id="nbFields" v-model="nbFields" type="number" name="nbFields" />
-            <br />
-            <label for="maxRounds">Durée estimée du tournoi (poules & phases finales) :
-             {{ Math.round(((((teams.length / 2) * maxRounds) * 25) / 60 / nbFields) + ((7 * 20) / 60 / nbFields)) }} h</label>
-          </div>
-
-
-          <H3>Ajout des équipes</H3>
-          <div>
-            <form @submit.prevent="addTeam">
-             <label for="name">Nom : </label>
-             <input id="name" v-model="name" type="text" name="name" />
-             <label for="score">Score : </label>
-             <input id="score" v-model="score" type="number" name="score" />
-             <br />
-             <button class="all">Ajouter équipe</button>
-           </form>
-         </div>
-
-         <br /><br /><br />         
-         <table class="team-list">
-          <thead>
-            <tr>
-             <th>Rang</th> 
-             <th>Equipe</th>
-             <th>Action</th>               
-           </tr>
-         </thead>
-         <tbody>
-           <tr v-for="(team, n) in teams" :key="team.name">
-            <td style="text-align: center;">{{ team.score }}</td>
-            <td>{{ team.name }}</td>
-            <td style="text-align: center;"><button style="float: none;" @click="removeTeam(n)" class="reset">Supprimer</button></td>
-          </tr>   
-        </tbody>
-      </table>
-    </template>
+      <h3>Ajout des équipes</h3>
+        <form @submit.prevent="addTeam">
+		<div>
+			<label for="name">Nom : </label>
+			<input id="name" v-model="name" type="text" name="name" />
+			<label for="score">Score : </label>
+			<input id="score" v-model="score" type="number" name="score" />
+		</div>
+		<div>
+			<button class="all">Ajouter équipe</button>
+		</div>
+		</form>
+      
+     <table class="team-list">
+      <thead>
+        <tr>
+         <th>Rang</th> 
+         <th>Equipe</th>
+         <th>Action</th>               
+       </tr>
+     </thead>
+     <tbody>
+       <tr v-for="(team, n) in teams" :key="team.name">
+        <td class="cell-align-center">{{ team.score }}</td>
+        <td>{{ team.name }}</td>
+        <td class="cell-align-center"><button style="float: none;" @click="removeTeam(n)" class="delete">Supprimer</button></td>
+      </tr>   
+    </tbody>
+  </table>
+</template>
 
 
-    <template v-if="!finalsMode">
-      <h2>Rencontres tour {{ round }}</h2>
-      <p> Sélectionner le vainqueur de chaque match : </p>
+<template v-if="!finalsMode">
+  <h2>Rencontres tour {{ round }}</h2>
+  <p> Sélectionner le vainqueur de chaque match : </p>
 
-      <table class="match-list">
-        <tbody>
-          <tr v-for="(m, i) in matches" :key="m[0].name">
-            <td style="text-align:right;"><b>M{{ i + 1 }}</b></td>
-            <td style="text-align: left;"><input :id="m[0].name" type="radio" :name="m[0].name"
-              @change="setWinner(m[0])"
-              v-model.number="m[0].matches[round - 1].win" :value="1"/>
-              <label :for="m[0].name"
-              :class="{won: hasJustWon(m[0]), lost: hasJustLost(m[0])}"
-              >{{ m[0].name }}</label></td>
-              <td><b>VS</b></td>
-              <td style="text-align: right;"><label :for="m[1].name"
-                :class="{won: hasJustWon(m[1]), lost: hasJustLost(m[1])}"
-                >{{ m[1].name }}</label>
-                <input :id="m[1].name" type="radio" :name="m[0].name"
-                @change="setWinner(m[1])"
-                v-model.number="m[1].matches[round - 1].win" :value="1"/></td>
-              </tr>
-            </tbody>
-          </table>
-        </template>
-        <template v-else>
-          <h2>Phases finales</h2>
-          <div id="bracket">
-            <ul class="round round-1">
-              <li class="spacer">&nbsp;</li>
-              <template v-for="(p, idx) in pairings">
-                <li :key="p[0].name" class="game game-top">
-                  <input :id="p[0].name" type="radio"
-                  :name="p[0].name"
-                  @change="setSemiFinals(idx)"
-                  v-model.number="p[2]" :value="1"/>
-                  <label :for="p[0].name"
-                  :class="{won: p[2] === 1, lost: p[2] === -1}"
-                  >{{ p[0].name }}</label>
-                </li>
-                <li :key="p[0].name + p[1].name" class="game game-spacer">
-                </li>
-                <li :key="p[1].name" class="game game-bottom">
-                  <input :id="p[1].name" type="radio"
-                  :name="p[1].name"
-                  @change="setSemiFinals(idx)"
-                  v-model.number="p[2]" :value="-1"/>
-                  <label :for="p[1].name"
-                  :class="{won: p[2] === -1, lost: p[2] === 1}"
-                  >{{ p[1].name }}</label>
-                </li>
-                <li :key="p[0].name + 'spacer'" class="spacer">&nbsp;</li>
-              </template>
-            </ul>
-            <ul class="round round-2">
-              <li class="spacer">&nbsp;</li>
-              <template v-for="(s, idx) in semiFinals">
-                <li :key="s[0].name" class="game game-top">
-                  <input :id="s[0].name" type="radio"
-                  :name="s[0].name"
-                  @change="setFinals(idx)"
-                  v-model.number="s[2]" :value="1"/>
-                  <label :for="s[0].name"
-                  :class="{won: s[2] === 1, lost: s[2] === -1}"
-                  >{{ s[0].name }}</label>
-                </li>
-                <li :key="s[0].name + s[1].name" class="game game-spacer">
-                </li>
-                <li :key="s[1].name" class="game game-bottom">
-                  <input :id="s[1].name" type="radio"
-                  :name="s[1].name"
-                  @change="setFinals(idx)"
-                  v-model.number="s[2]" :value="-1"/>
-                  <label :for="s[1].name"
-                  :class="{won: s[2] === -1, lost: s[2] === 1}"
-                  >{{ s[1].name }}</label>
-                </li>
-                <li :key="s[0].name + 'spacer'" class="spacer">&nbsp;</li>
-              </template>
-            </ul>
-            <ul class="round round-3">
-              <li class="spacer">&nbsp;</li>
-              <template v-for="f in finals">
-                <li :key="f[0].name" class="game game-top">
-                  <input :id="f[0].name" type="radio"
-                  :name="f[0].name"
-                  v-model.number="f[2]" :value="1"/>
-                  <label :for="f[0].name"
-                  :class="{won: f[2] === 1, lost: f[2] === -1}"
-                  >{{ f[0].name }}</label>
-                </li>
-                <li :key="f[0].name + f[1].name" class="game game-spacer">
-                </li>
-                <li :key="f[1].name" class="game game-bottom">
-                  <input :id="f[1].name" type="radio"
-                  :name="f[1].name"
-                  v-model.number="f[2]" :value="-1"/>
-                  <label :for="f[1].name"
-                  :class="{won: f[2] === -1, lost: f[2] === 1}"
-                  >{{ f[1].name }}</label>
-                </li>
-                <li :key="f[0].name + 'spacer'" class="spacer">&nbsp;</li>
-              </template>
-            </ul>
-          </div>
-        </template>
-
-        <template v-if="started">
-          <h2>Classement poule Suisse</h2>
-          <table id="ranking">
-           <thead>
-            <tr style="text-align:center">
-              <th>Rang</th>
-              <th>Équipe</th>
-              <th>Victoires</th>
-              <th title="Somme des points des adversaires">SPA</th>
-              <th v-for="(match, n) in teams[0].matches" :key="match.against">
-                Tour {{ n + 1 }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(team, n) in rankedTeams" :key="team.name" style="text-align:center">
-              <td>{{(n > 0 && nbWins(team) === nbWins(rankedTeams[n-1]) && goalAverage(team) === goalAverage(rankedTeams[n-1]))? '-' : n + 1}}</td>
-              <td>{{team.name}}</td>
-              <td>{{nbWins(team)}}</td>
-              <td>{{goalAverage(team)}}</td>
-              <td v-for="match in team.matches" :key="match.against"
-              :class="{won: match.win === 1, lost: match.win === -1}" >
-              <span v-if="match.against !== -1">
-              {{teams[match.against].name}}</span>
-              <span v-else>-</span>
-            </td>
+  <table class="match-list">
+    <tbody>
+      <tr v-for="(m, i) in matches" :key="m[0].name">
+        <td class="cell-align-center"><b>M{{ i + 1 }}</b></td>
+        <td><input :id="m[0].name" type="radio" :name="m[0].name"
+          @change="setWinner(m[0])"
+          v-model.number="m[0].matches[round - 1].win" :value="1"/>
+          <label :for="m[0].name"
+          :class="{won: hasJustWon(m[0]), lost: hasJustLost(m[0])}"
+          >{{ m[0].name }}</label></td>
+          <td><b>VS</b></td>
+          <td><label :for="m[1].name"
+            :class="{won: hasJustWon(m[1]), lost: hasJustLost(m[1])}"
+            >{{ m[1].name }}</label>
+            <input :id="m[1].name" type="radio" :name="m[0].name"
+            @change="setWinner(m[1])"
+            v-model.number="m[1].matches[round - 1].win" :value="1"/></td>
           </tr>
         </tbody>
       </table>
-
+    </template>
+    <template v-else>
+      <h2>Phases finales</h2>
+      <div id="bracket">
+        <ul class="round round-1">
+          <li class="spacer">&nbsp;</li>
+          <template v-for="(p, idx) in pairings">
+            <li :key="p[0].name" class="game game-top">
+              <input :id="p[0].name" type="radio"
+              :name="p[0].name"
+              @change="setSemiFinals(idx)"
+              v-model.number="p[2]" :value="1"/>
+              <label :for="p[0].name"
+              :class="{won: p[2] === 1, lost: p[2] === -1}"
+              >{{ p[0].name }}</label>
+            </li>
+            <li :key="p[0].name + p[1].name" class="game game-spacer">
+            </li>
+            <li :key="p[1].name" class="game game-bottom">
+              <input :id="p[1].name" type="radio"
+              :name="p[1].name"
+              @change="setSemiFinals(idx)"
+              v-model.number="p[2]" :value="-1"/>
+              <label :for="p[1].name"
+              :class="{won: p[2] === -1, lost: p[2] === 1}"
+              >{{ p[1].name }}</label>
+            </li>
+            <li :key="p[0].name + 'spacer'" class="spacer">&nbsp;</li>
+          </template>
+        </ul>
+        <ul class="round round-2">
+          <li class="spacer">&nbsp;</li>
+          <template v-for="(s, idx) in semiFinals">
+            <li :key="s[0].name" class="game game-top">
+              <input :id="s[0].name" type="radio"
+              :name="s[0].name"
+              @change="setFinals(idx)"
+              v-model.number="s[2]" :value="1"/>
+              <label :for="s[0].name"
+              :class="{won: s[2] === 1, lost: s[2] === -1}"
+              >{{ s[0].name }}</label>
+            </li>
+            <li :key="s[0].name + s[1].name" class="game game-spacer">
+            </li>
+            <li :key="s[1].name" class="game game-bottom">
+              <input :id="s[1].name" type="radio"
+              :name="s[1].name"
+              @change="setFinals(idx)"
+              v-model.number="s[2]" :value="-1"/>
+              <label :for="s[1].name"
+              :class="{won: s[2] === -1, lost: s[2] === 1}"
+              >{{ s[1].name }}</label>
+            </li>
+            <li :key="s[0].name + 'spacer'" class="spacer">&nbsp;</li>
+          </template>
+        </ul>
+        <ul class="round round-3">
+          <li class="spacer">&nbsp;</li>
+          <template v-for="f in finals">
+            <li :key="f[0].name" class="game game-top">
+              <input :id="f[0].name" type="radio"
+              :name="f[0].name"
+              v-model.number="f[2]" :value="1"/>
+              <label :for="f[0].name"
+              :class="{won: f[2] === 1, lost: f[2] === -1}"
+              >{{ f[0].name }}</label>
+            </li>
+            <li :key="f[0].name + f[1].name" class="game game-spacer">
+            </li>
+            <li :key="f[1].name" class="game game-bottom">
+              <input :id="f[1].name" type="radio"
+              :name="f[1].name"
+              v-model.number="f[2]" :value="-1"/>
+              <label :for="f[1].name"
+              :class="{won: f[2] === -1, lost: f[2] === 1}"
+              >{{ f[1].name }}</label>
+            </li>
+            <li :key="f[0].name + 'spacer'" class="spacer">&nbsp;</li>
+          </template>
+        </ul>
+      </div>
     </template>
 
-  </div>
+    <template v-if="started">
+      <h2>Classement poule Suisse</h2>
+      <table id="ranking">
+       <thead>
+        <tr style="text-align:center">
+          <th>Rang</th>
+          <th>Équipe</th>
+          <th>Victoires</th>
+          <th title="Somme des points des adversaires">SPA</th>
+          <th v-for="(match, n) in teams[0].matches" :key="match.against">
+            Tour {{ n + 1 }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(team, n) in rankedTeams" :key="team.name" style="text-align:center">
+          <td>{{(n > 0 && nbWins(team) === nbWins(rankedTeams[n-1]) && goalAverage(team) === goalAverage(rankedTeams[n-1]))? '-' : n + 1}}</td>
+          <td>{{team.name}}</td>
+          <td>{{nbWins(team)}}</td>
+          <td>{{goalAverage(team)}}</td>
+          <td v-for="match in team.matches" :key="match.against"
+          :class="{won: match.win === 1, lost: match.win === -1}" >
+          <span v-if="match.against !== -1">
+          {{teams[match.against].name}}</span>
+          <span v-else>-</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</template>
+
 </div>
 
 
@@ -257,6 +254,11 @@
         if (!this.teams[0].matches)
           return 0;
         return this.teams[0].matches.length;
+      },
+      duration() {
+		if (this.nbFields == 0)
+			return 0;
+		return Math.round(((((this.teams.length / 2) * this.maxRounds) * 25) / 60 / this.nbFields) + ((7 * 20) / 60 / this.nbFields));
       },
       matches() {
         let res = [];
@@ -493,7 +495,6 @@
   .round {
     display: flex;
     flex-direction: column;
-    width: 100%;
     padding: 0;
     margin: 0;
   }
@@ -534,6 +535,7 @@
   }
   button.reset {
     padding: 9px 35px;
+    margin-bottom: 20px;
     color: #fff;
     font-size: 13px;
     font-family: inherit;
@@ -548,6 +550,23 @@
    color: #333;
    cursor: pointer;
  }  
+
+ button.delete {
+    padding: 9px 35px;
+    color: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    background: #d8302f;
+    border:0;
+    float: left;
+  }
+  button.delete:hover, 
+  button.delete:focus,
+  button.delete:active {
+   background: #faafaf;
+   color: #333;
+   cursor: pointer;
+ }
  button.start {
   padding: 9px 35px;
   color: #fff;
@@ -581,13 +600,7 @@ button.all:active {
  color: #333;
    cursor: pointer;
 }
-.contain{
-  width: 100%;
-  overflow: auto;
-}
-.col-middle{
-  float: left;
-  position: absolute;
+.main-panel{
   left: 0px;
   width: 50%;
   margin-left: 20%;
@@ -596,15 +609,15 @@ button.all:active {
   text-align:left;
   padding: 15px;
 }  
-.col-right{
+.sidebar{
  float: right;
  position: absolute;
  right: 0px;
- width: 20%;
- margin-right: 5%;
+ width: 12%;
+ margin-right: 12%;
  padding: 10px;
 }
-.col-middle input {
+.main-panel input {
   width: 200px;
   height: 10px;
   font-size: 16px;
@@ -615,9 +628,9 @@ button.all:active {
   padding-right: 5px;
   font-weight: 300;
 }
-.col-middle input:focus, 
-.col-middle input:hover,
-.col-middle input:active {
+.main-panel input:focus, 
+.main-panel input:hover,
+.main-panel input:active {
   border: 1px solid #1882f2;
   color:#1882f2;
   ;
@@ -625,6 +638,7 @@ button.all:active {
 .team-list {
   border: 1px solid #ebebeb;
   width: 100%;
+  margin-top: 70px;
 }
 .team-list thead {
   text-align: center;
@@ -643,5 +657,8 @@ button.all:active {
   text-align: center;
   vertical-align: center;
   padding: 2px;  
+}
+.cell-align-center {
+	text-align: center;
 }
 </style>

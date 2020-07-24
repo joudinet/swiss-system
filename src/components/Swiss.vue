@@ -25,8 +25,9 @@
         <input id="nbFields" v-model="nbFields" type="number" name="nbFields" />
       </div>
       <div>
-        <label for="maxRounds">Durée estimée du tournoi (poules & phases finales) :
-          {{ duration }} h</label>
+        <label for="maxRounds">
+          Durée estimée du tournoi : {{ duration }} min
+        </label>
       </div>
 
       <h3>Ajout des équipes</h3>
@@ -245,9 +246,13 @@
         return this.teams[0].matches.length;
       },
       duration() {
-                if (this.nbFields == 0)
-                        return 0;
-                return Math.round(((((this.teams.length / 2) * this.maxRounds) * 25) / 60 / this.nbFields) + ((7 * 20) / 60 / this.nbFields));
+        if (this.nbFields == 0)
+          return 0;
+
+        let seconds =  Math.round((this.teams.length / 2 * this.maxRounds +
+          ((this.teams.length >= 8)? 7 : 0)) / this.nbFields) * 25 * 60;
+        let date = new Date(seconds * 1000);
+        return date.toISOString().substr(11,5).replace(/^[0:]+/, "").replace(':', 'h');
       },
       matches() {
         let res = [];
@@ -594,17 +599,17 @@ aside {
 
 @media (max-width: 600px) {
     main {
-	width: auto;
-	margin-right: 0;
+        width: auto;
+        margin-right: 0;
     }
     aside {
-	position: static;
-	width: auto;
-	padding-right: 0;
-	height: 43px;
+        position: static;
+        width: auto;
+        padding-right: 0;
+        height: 43px;
     }
     button.start {
-	float: right;
+        float: right;
     }
 }
 

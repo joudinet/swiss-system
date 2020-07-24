@@ -46,14 +46,16 @@
         <thead>
           <tr>
             <th>Rang</th>
-            <th>Equipe</th>
+            <th>Équipe</th>
+            <th>Score</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(team, n) in teams" :key="team.name">
-            <td class="cell-align-center">{{ team.score }}</td>
+            <td class="cell-align-center">{{ n + 1 }}</td>
             <td>{{ team.name }}</td>
+            <td>{{ team.score }}</td>
             <td class="cell-align-center"><button style="float: none;" @click="removeTeam(n)" class="delete">Supprimer</button></td>
           </tr>
         </tbody>

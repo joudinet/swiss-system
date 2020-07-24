@@ -1,6 +1,5 @@
 <template>
   <div class="swiss">
-    <div class="banner"></div>
 
   <div class="sidebar">
     <button @click="reset" class="reset">Reset</button>
@@ -440,15 +439,6 @@
     right: 0;
     padding-top: 1ex;
     padding-right: 1em;
-  }
-  .banner {
-    position: relative;
-    min-height: 50px;
-    padding-bottom: 100px;
-    background-image: url('../assets/banner_ssa.png');
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: 30%;
   }
   footer {
     position: fixed;

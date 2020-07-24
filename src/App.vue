@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <div class="banner"></div>
     <Swiss />
   </div>
 </template>
@@ -22,5 +23,12 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+}
+.banner {
+    height: 50px;
+    padding-bottom: 2mm;
+    background-image: url('assets/banner_ssa.png');
+    background-repeat: no-repeat;
+    background-position: center center;
 }
 </style>

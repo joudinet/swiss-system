@@ -173,7 +173,8 @@
             <th>Rang</th>
             <th>Équipe</th>
             <th>Victoires</th>
-            <th title="Somme des points des adversaires">SPA</th>
+            <th title="Somme des victoires des adversaires">SVA</th>
+            <th title="Cumul des victoires par tour">CVT</th>
             <th v-for="(match, n) in teams[0].matches" :key="match.against">
               Tour {{ n + 1 }}
             </th>
@@ -181,10 +182,11 @@
         </thead>
         <tbody>
           <tr v-for="(team, n) in rankedTeams" :key="team.name" style="text-align:center">
-            <td>{{(n > 0 && nbWins(team) === nbWins(rankedTeams[n-1]) && goalAverage(team) === goalAverage(rankedTeams[n-1]))? '-' : n + 1}}</td>
+            <td>{{(n > 0 && nbWins(team) === nbWins(rankedTeams[n-1]) && solkoff(team) === solkoff(rankedTeams[n-1]) && cumulative(team) === cumulative(rankedTeams[n-1]))? '-' : n + 1}}</td>
             <td>{{team.name}}</td>
             <td>{{nbWins(team)}}</td>
-            <td>{{goalAverage(team)}}</td>
+            <td>{{solkoff(team)}}</td>
+            <td>{{cumulative(team)}}</td>
             <td v-for="match in team.matches" :key="match.against"
                 :class="{won: match.win === 1, lost: match.win === -1}" >
               <span v-if="match.against !== -1">
@@ -273,8 +275,13 @@
           return Array.from(this.teams).sort((t1, t2) => {
             const win1 = this.nbWins(t1);
             const win2 = this.nbWins(t2);
-            if (win1 === win2)
-              return this.goalAverage(t2) - this.goalAverage(t1);
+            const solkoff1 = this.solkoff(t1);
+            const solkoff2 = this.solkoff(t2);
+            if (win1 === win2) {
+              if (solkoff1 === solkoff2)
+                return this.cumulative(t2) - this.cumulative(t1);
+              return solkoff2 - solkoff1;
+            }
             return win2 - win1;
           });
         }
@@ -314,12 +321,18 @@
             return 0;
           return team.matches.reduce((acc, m) => m.win === 1? ++acc : acc, 0);
         },
-        goalAverage(team) {
+        solkoff(team) {
           if (!team.matches)
             return 0;
           return team.matches.reduce(
             (acc, m) => acc += this.nbWins(this.teams[m.against]),
             0);
+        },
+        cumulative(team) {
+          if (!team.matches)
+            return 0;
+          return team.matches.reduce(
+            (acc, m, idx) => m.win === 1? acc += this.round - idx : acc, 0);
         },
         setWinner(team) {
           let j = team.matches[this.round - 1].against;

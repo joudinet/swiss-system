@@ -17,12 +17,16 @@
     <template v-if="!started">
       <h3>Configuration du tournoi</h3>
       <div>
-        <label for="maxRounds">Nb. tours de poule Suisse : </label>
+        <label for="maxRounds">Nb. tours suisse : </label>
         <input id="maxRounds" v-model="maxRounds" type="number" name="maxRounds" />
       </div>
       <div>
         <label for="nbFields">Nb. terrains disponibles : </label>
         <input id="nbFields" v-model="nbFields" type="number" name="nbFields" />
+      </div>
+      <div>
+        <label for="matchDuration">Durée d'un match (min) : </label>
+        <input id="matchDuration" v-model="matchDuration" type="number" name="matchDuration" />
       </div>
       <div>
         <label for="maxRounds">
@@ -217,7 +221,8 @@
         semiFinals: [[{name: "Winner 1st quarterfinal"}, {name: "Winner 2nd quaterfinal"}, 0],[{name: "Winner 3rd quarterfinal"}, {name: "Winner 4th quaterfinal"}, 0]],
         finals: [[{name: "Winner 1st semifinal"}, {name: "Winner 2nd semifinal"}, 0]],
         maxRounds: 4,
-        nbFields:4,
+        nbFields: 4,
+        matchDuration: 25,
         name: "",
         score: 0
       };
@@ -248,11 +253,12 @@
         return this.teams[0].matches.length;
       },
       duration() {
-        if (this.nbFields == 0)
-          return 0;
+        if (this.nbFields == 0 || this.teams.length === 0)
+          return "0";
 
-        let seconds =  Math.round((this.teams.length / 2 * this.maxRounds +
-          ((this.teams.length >= 8)? 7 : 0)) / this.nbFields) * 25 * 60;
+        let seconds =  (Math.ceil(this.teams.length / 2 / this.nbFields)
+            * this.maxRounds + ((this.teams.length >= 5)? 3 : 2))
+            * this.matchDuration * 60;
         let date = new Date(seconds * 1000);
         return date.toISOString().substr(11,5).replace(/^[0:]+/, "").replace(':', 'h');
       },

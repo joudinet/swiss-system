@@ -177,8 +177,8 @@
             <th>Rang</th>
             <th>Équipe</th>
             <th>Victoires</th>
-            <th title="Somme des victoires des adversaires">SVA</th>
-            <th title="Cumul des victoires par tour">CVT</th>
+            <th title="Somme des victoires des adversaires (solkoff)">SVA</th>
+            <th title="Somme cumulée des victoires">Cumul.</th>
             <th v-for="(match, n) in teams[0].matches" :key="match.against">
               Tour {{ n + 1 }}
             </th>
@@ -217,6 +217,7 @@
         teams: [],
         finalsMode: false,
         graph: null,
+        matches: [],
         pairings: [],
         semiFinals: [[{name: "Winner 1st quarterfinal"}, {name: "Winner 2nd quaterfinal"}, 0],[{name: "Winner 3rd quarterfinal"}, {name: "Winner 4th quaterfinal"}, 0]],
         finals: [[{name: "Winner 1st semifinal"}, {name: "Winner 2nd semifinal"}, 0]],
@@ -231,11 +232,13 @@
       if (localStorage.getItem('teams')) {
         try {
           this.teams = JSON.parse(localStorage.getItem('teams'));
+          this.matches = JSON.parse(localStorage.getItem('matches'));
           this.pairings = JSON.parse(localStorage.getItem('pairings'));
           this.maxRounds = Math.floor(Number(localStorage.getItem('max-rounds')))
           || 4;
         } catch(e) {
           localStorage.removeItem('teams');
+          localStorage.removeItem('matches');
           localStorage.removeItem('pairings');
           localStorage.removeItem('max-rounds');
         }
@@ -261,14 +264,6 @@
             * this.matchDuration * 60;
         let date = new Date(seconds * 1000);
         return date.toISOString().substr(11,5).replace(/^[0:]+/, "").replace(':', 'h');
-      },
-      matches() {
-        let res = [];
-        this.pairings.forEach((j, i) => {
-          if (j !== -1 && i < j)
-            res.push([this.teams[i], this.teams[j]]);
-        });
-        return res;
       },
       missingResults() {
         for (const team of this.teams)
@@ -315,6 +310,10 @@
         savePairings() {
           const encoded = JSON.stringify(this.pairings);
           localStorage.setItem('pairings', encoded);
+        },
+        saveMatches() {
+          const encoded = JSON.stringify(this.matches);
+          localStorage.setItem('matches', encoded);
         },
         hasJustWon(team) {
           return team.matches[this.round - 1].win === 1;
@@ -364,17 +363,26 @@
          this.pairings = Blossom(this.graph);
          this.teams.forEach( (team, i) => this.$set(team, 'matches',
           [{against: this.pairings[i], win: 0}]));
+         this.matches = [];
+         this.pairings.forEach((j, i) => {
+           if (j !== -1 && i < j)
+             this.matches.push([this.teams[i], this.teams[j]]);
+         });
+         this.matches.sort((m1, m2) => {
+           return this.nbWins(m2[0]) + this.nbWins(m2[1])
+                - this.nbWins(m1[0]) - this.nbWins(m1[1]);
+         });
          localStorage.setItem('started', this.started);
          localStorage.setItem('max-rounds', this.maxRounds);
          this.saveTeams();
-         this.savePairings();
+         this.saveMatches();
        },
        nextRound() {
         if (this.missingResults) {
           console.log("Please fill in all match results before moving to next round.");
           return;
         }
-      // Build graph according to number of wins.
+      // Build a graph where edges are weighted according to win differences.
       this.graph = [];
       this.teams.forEach( (team, i) => {
         for (let j = i + 1; j < this.teams.length; j++) {
@@ -396,10 +404,19 @@
       this.pairings = Blossom(this.graph);
       this.teams.forEach( (team, i) => team.matches.push(
         {against: this.pairings[i], win: 0}));
+      this.matches = [];
+      this.pairings.forEach((j, i) => {
+        if (j !== -1 && i < j)
+          this.matches.push([this.teams[i], this.teams[j]]);
+      });
+      this.matches.sort((m1, m2) => {
+        return this.nbWins(m2[0]) + this.nbWins(m2[1])
+             - this.nbWins(m1[0]) - this.nbWins(m1[1]);
+      });
       if (this.round >= this.maxRounds)
         this.over = true;
       this.saveTeams();
-      this.savePairings();
+      this.saveMatches();
     },
     startFinals() {
       this.finalsMode = true;
@@ -433,10 +450,11 @@
       this.over = false;
       this.finalsMode = false;
       this.teams.forEach(team => this.$delete(team, 'matches'));
-      this.pairings = [];
+      this.pairings = this.matches = [];
       localStorage.setItem('started', this.started);
       this.saveTeams();
       this.savePairings();
+      this.saveMatches();
     },
   }
 }
@@ -512,7 +530,8 @@
   }
   li.game-top {
     border-bottom: 1px solid #aaa;
-    padding-top: 20px;
+    padding-top: 2ex;
+    padding-right: 1em;
     min-height: 40px;
     text-align:left;
   }
@@ -525,7 +544,8 @@
     border-bottom: 1px solid #aaa;
     border-right: 1px solid #aaa;
     min-height: 40px;
-    padding-top: 20px;
+    padding-top: 2ex;
+    padding-right: 1em;
     text-align:left;
   }
 

@@ -90,10 +90,30 @@ export default {
     };
   },
   mounted() {
-    this.pairings.push([this.teams[0], this.teams[7], 0]);
-    this.pairings.push([this.teams[3], this.teams[4], 0]);
-    this.pairings.push([this.teams[2], this.teams[5], 0]);
-    this.pairings.push([this.teams[1], this.teams[6], 0]);
+    if (this.teams.length >= 8)
+      this.pairings.push([this.teams[0], this.teams[7], 0]);
+    else {
+      this.pairings.push([this.teams[0], {name: "-"}, 1]);
+      this.setSemiFinals(0);
+    }
+    if (this.teams.length >= 5)
+      this.pairings.push([this.teams[3], this.teams[4], 0]);
+    else {
+      this.pairings.push([this.teams[3], {name: "-"}, 1]);
+      this.setSemiFinals(1);
+    }
+    if (this.teams.length >= 6)
+      this.pairings.push([this.teams[2], this.teams[5], 0]);
+    else {
+      this.pairings.push([this.teams[2], {name: "-"}, 1]);
+      this.setSemiFinals(2);
+    }
+    if (this.teams.length >= 7)
+      this.pairings.push([this.teams[1], this.teams[6], 0]);
+    else {
+      this.pairings.push([this.teams[1], {name: "-"}, 1]);
+      this.setSemiFinals(3);
+    }
   },
   methods: {
     setSemiFinals(idx) {

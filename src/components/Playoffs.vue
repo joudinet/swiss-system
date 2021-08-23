@@ -1,9 +1,31 @@
 <template>
 <div id="playoffs">
-  <h2>Phases finales</h2>
+  <h2>Phases finales <span v-show="spots">(pour {{spots}} places qualificatives)</span></h2>
   <div id="bracket">
+    <ul class="round round-0" v-if="teams.length > 8">
+      <template v-for="(p, idx) in lastSixteens">
+        <li :key="p[0].name">
+          <input :id="p[0].name" type="radio"
+                 :name="p[0].name"
+                 @change="setQuarterFinals(idx)"
+                 v-model.number="p[2]" :value="1"/>
+          <label :for="p[0].name"
+                 :class="{won: p[2] === 1, lost: p[2] === -1}"
+                 >{{ p[0].name }}</label>
+        </li>
+        <li :key="p[1].name">
+          <input :id="p[1].name" type="radio"
+                 :name="p[1].name"
+                 @change="setQuarterFinals(idx)"
+                 v-model.number="p[2]" :value="-1"/>
+          <label :for="p[1].name"
+                 :class="{won: p[2] === -1, lost: p[2] === 1}"
+                 >{{ p[1].name }}</label>
+        </li>
+      </template>
+    </ul>
     <ul class="round round-1">
-      <template v-for="(p, idx) in pairings">
+      <template v-for="(p, idx) in quarterFinals">
         <li :key="p[0].name">
           <input :id="p[0].name" type="radio"
                  :name="p[0].name"
@@ -69,7 +91,7 @@
       </template>
     </ul>
     <ul class="round round-4">
-      <li :key="winner"> {{ winner }}</li>
+      <li v-for="winner in winners" :key="winner"> {{ winner }}</li>
     </ul>
   </div>
 </div>
@@ -79,64 +101,148 @@
 export default {
   name: 'Playoffs',
   props: {
-    teams: { type: Array, required: true }
+    teams: { type: Array, required: true },
+    spots: { type: Number, default: 0 }
   },
   data() {
     return {
-      pairings: [],
-      semiFinals: [[{name: "Winner 1st quarterfinal"}, {name: "Winner 2nd quaterfinal"}, 0],[{name: "Winner 3rd quarterfinal"}, {name: "Winner 4th quaterfinal"}, 0]],
-      finals: [[{name: "Winner 1st semifinal"}, {name: "Winner 2nd semifinal"}, 0]],
-      winner: "Winner",
+      lastSixteens: [],
+      quarterFinals: [
+        [{name: "Winner 1st 8th-final"}, {name: "Winner 2nd 8th-final"}, 0],
+        [{name: "Winner 3rd 8th-final"}, {name: "Winner 4th 8th-final"}, 0],
+        [{name: "Winner 5th 8th-final"}, {name: "Winner 6th 8th-final"}, 0],
+        [{name: "Winner 7th 8th-final"}, {name: "Winner 8th 8th-final"}, 0]
+      ],
+      semiFinals: [
+        [{name: "Winner 1st quarterfinal"}, {name: "Winner 2nd quarterfinal"}, 0],
+        [{name: "Winner 3rd quarterfinal"}, {name: "Winner 4th quarterfinal"}, 0]
+      ],
+      finals: [
+        [{name: "Winner 1st semifinal"}, {name: "Winner 2nd semifinal"}, 0],
+        [{name: "Loser 1st semifinal"}, {name: "Loser 2nd semifinal"}, 0]
+      ],
+      winners: ["Winner", "3rd place"],
     };
   },
   mounted() {
-    if (this.teams.length >= 8)
-      this.pairings.push([this.teams[0], this.teams[7], 0]);
-    else {
-      this.pairings.push([this.teams[0], {name: "-"}, 1]);
-      this.setSemiFinals(0);
-    }
-    if (this.teams.length >= 5)
-      this.pairings.push([this.teams[3], this.teams[4], 0]);
-    else {
-      this.pairings.push([this.teams[3], {name: "-"}, 1]);
-      this.setSemiFinals(1);
-    }
-    if (this.teams.length >= 6)
-      this.pairings.push([this.teams[2], this.teams[5], 0]);
-    else {
-      this.pairings.push([this.teams[2], {name: "-"}, 1]);
-      this.setSemiFinals(2);
-    }
-    if (this.teams.length >= 7)
-      this.pairings.push([this.teams[1], this.teams[6], 0]);
-    else {
-      this.pairings.push([this.teams[1], {name: "-"}, 1]);
-      this.setSemiFinals(3);
+    if (this.teams.length <= 8) {
+      this.quarterFinals = [];
+      if (this.teams.length >= 8)
+        this.quarterFinals.push([this.teams[0], this.teams[7], 0]);
+      else {
+        this.quarterFinals.push([this.teams[0], {name: "-"}, 1]);
+        this.setSemiFinals(0);
+      }
+      if (this.teams.length >= 5)
+        this.quarterFinals.push([this.teams[3], this.teams[4], 0]);
+      else {
+        this.quarterFinals.push([this.teams[3], {name: "-"}, 1]);
+        this.setSemiFinals(1);
+      }
+      if (this.teams.length >= 6)
+        this.quarterFinals.push([this.teams[2], this.teams[5], 0]);
+      else {
+        this.quarterFinals.push([this.teams[2], {name: "-"}, 1]);
+        this.setSemiFinals(2);
+      }
+      if (this.teams.length >= 7)
+        this.quarterFinals.push([this.teams[1], this.teams[6], 0]);
+      else {
+        this.quarterFinals.push([this.teams[1], {name: "-"}, 1]);
+        this.setSemiFinals(3);
+      }
+    } else { // last 16
+      if (this.teams.length >= 16)
+        this.lastSixteens.push([this.teams[0], this.teams[15], 0]);
+      else {
+        this.lastSixteens.push([this.teams[0], {name: "-"}, 1]);
+        this.setQuarterFinals(0);
+      }
+      if (this.teams.length >= 9)
+        this.lastSixteens.push([this.teams[7], this.teams[8], 0]);
+      else {
+        this.lastSixteens.push([this.teams[7], {name: "-       "}, 1]);
+        this.setQuarterFinals(1);
+      }
+      if (this.teams.length >= 12)
+        this.lastSixteens.push([this.teams[4], this.teams[11], 0]);
+      else {
+        this.lastSixteens.push([this.teams[4], {name: "-    "}, 1]);
+        this.setQuarterFinals(2);
+      }
+      if (this.teams.length >= 13)
+        this.lastSixteens.push([this.teams[3], this.teams[12], 0]);
+      else {
+        this.lastSixteens.push([this.teams[3], {name: "-   "}, 1]);
+        this.setQuarterFinals(3);
+      }
+      if (this.teams.length >= 14)
+        this.lastSixteens.push([this.teams[2], this.teams[13], 0]);
+      else {
+        this.lastSixteens.push([this.teams[2], {name: "-  "}, 1]);
+        this.setQuarterFinals(4);
+      }
+      if (this.teams.length >= 11)
+        this.lastSixteens.push([this.teams[5], this.teams[10], 0]);
+      else {
+        this.lastSixteens.push([this.teams[5], {name: "-     "}, 1]);
+        this.setQuarterFinals(5);
+      }
+      if (this.teams.length >= 10)
+        this.lastSixteens.push([this.teams[6], this.teams[9], 0]);
+      else {
+        this.lastSixteens.push([this.teams[6], {name: "-      "}, 1]);
+        this.setQuarterFinals(6);
+      }
+      if (this.teams.length >= 15)
+        this.lastSixteens.push([this.teams[1], this.teams[14], 0]);
+      else {
+        this.lastSixteens.push([this.teams[1], {name: "- "}, 1]);
+        this.setQuarterFinals(7);
+      }
     }
   },
   methods: {
-    setSemiFinals(idx) {
-      if (this.pairings[idx][2] === 1)
-        this.semiFinals[Math.floor(idx / 2)][idx % 2].name =
-      this.pairings[idx][0].name;
+    setNextRound(idx, current, next) {
+      if (current[idx][2] === 1)
+        next[Math.floor(idx / 2)][idx % 2].name =
+        current[idx][0].name;
       else
-        this.semiFinals[Math.floor(idx / 2)][idx % 2].name =
-      this.pairings[idx][1].name;
+        next[Math.floor(idx / 2)][idx % 2].name =
+        current[idx][1].name;
+    },
+    setQuarterFinals(idx) {
+      this.setNextRound(idx, this.lastSixteens, this.quarterFinals);
+    },
+    setSemiFinals(idx) {
+      // if (this.quarterFinals[idx][2] === 1)
+      //   this.semiFinals[Math.floor(idx / 2)][idx % 2].name =
+      // this.quarterFinals[idx][0].name;
+      // else
+      //   this.semiFinals[Math.floor(idx / 2)][idx % 2].name =
+      // this.quarterFinals[idx][1].name;
+      this.setNextRound(idx, this.quarterFinals, this.semiFinals);
     },
     setFinals(idx) {
-      if (this.semiFinals[idx][2] === 1)
-        this.finals[Math.floor(idx / 2)][idx % 2].name =
+      // if (this.semiFinals[idx][2] === 1)
+      //   this.finals[Math.floor(idx / 2)][idx % 2].name =
+      // this.semiFinals[idx][0].name;
+      // else
+      //   this.finals[Math.floor(idx / 2)][idx % 2].name =
+      // this.semiFinals[idx][1].name;
+      this.setNextRound(idx, this.semiFinals, this.finals);
+      if (this.semiFinals[idx][2] === -1)
+        this.finals[1][idx % 2].name =
       this.semiFinals[idx][0].name;
       else
-        this.finals[Math.floor(idx / 2)][idx % 2].name =
+        this.finals[1][idx % 2].name =
       this.semiFinals[idx][1].name;
     },
     setWinner(idx) {
       if (this.finals[idx][2] === 1)
-        this.winner = this.finals[idx][0].name;
+        this.winners[idx] = this.finals[idx][0].name;
       else
-        this.winner = this.finals[idx][1].name;
+        this.winners[idx] = this.finals[idx][1].name;
     },
   }
 }
@@ -210,6 +316,71 @@ li:before {
     top: 50%;
 }
 
+/*
+.round-1 li:nth-of-type(odd):after {
+    height: 200%;
+    top: 50%;
+}
+.round-1 li:nth-of-type(even):after {
+    height: 200%;
+    top: -150%;
+}
+
+.round-2 li:nth-of-type(odd):after {
+    height: 350%;
+    top: 50%;
+}
+.round-2 li:nth-of-type(even):after {
+    height: 350%;
+    top: -300%;
+}
+
+.round-3 li:nth-of-type(odd):after {
+    height: 700%;
+    top: 50%;
+}
+.round-3 li:nth-of-type(even):after {
+    height: 700%;
+    top: -650%;
+}
+
+.round-4 li:nth-of-type(odd):after {
+    height: 700%;
+    top: 50%;
+}
+.round-4 li:nth-of-type(even):after {
+    height: 700%;
+    top: -650%;
+}
+
+.round:first-of-type li:before {
+    display: none;
+}
+
+.round:last-of-type li:after {
+    display: none;
+}
+
+.round-0, .round-1, .round-2 {
+    margin-bottom: 50%;
+}
+
+.round-3 {
+    margin-top: calc(25% + 1rem);
+}
+.round-3 li:first-of-type {
+    top: -15%;
+}
+.round-3 li:nth-child(3) {
+    top: -5%;
+}
+.round-3 li:nth-child(n+3):before {
+    display:none;
+}
+.round-4 {
+    margin-top: calc(12.5% + 1rem);
+}
+*/
 .round-2 li:nth-of-type(odd):after {
     height: 200%;
     top: 50%;
@@ -244,4 +415,13 @@ li:before {
 .round:last-of-type li:after {
     display: none;
 }
+
+.round-0, .round-1, .round-2 {
+    margin-bottom: 50%;
+}
+
+.round-3 li:nth-child(n+3):before {
+    display:none;
+}
+
 </style>

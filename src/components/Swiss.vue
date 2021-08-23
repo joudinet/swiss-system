@@ -94,7 +94,7 @@
         </table>
       </template>
       <template v-else>
-        <Playoffs :teams="playoffsTeams" />
+        <Playoffs :teams="playoffsTeams" :spots="remainingSpots"/>
       </template> <!-- finals -->
 
       <h2>Classement poule Suisse</h2>
@@ -147,6 +147,7 @@ export default {
       over: false,
       teams: [],
       playoffsTeams: [],
+      remainingSpots: 0,
       finalsMode: false,
       gameType: "Main draw",
       graph: null,
@@ -166,7 +167,6 @@ export default {
         this.maxRounds =
           Math.floor(Number(localStorage.getItem('max-rounds'))) || 4;
         this.gameType = localStorage.getItem('game-type') || "Main draw";
-        console.log("Successfully loaded local storage data", this.teams);
       } catch(e) {
         console.warning("error while loading local storage", e.message);
         localStorage.removeItem('teams');
@@ -197,12 +197,15 @@ export default {
       let date = new Date(seconds * 1000);
       return date.toISOString().substr(11,5).replace(/^[0:]+/, "").replace(':', 'h');
     },
+    // True iff there is a team with a missing result in the current
+    // round
     missingResults() {
-      for (const team of this.teams)
-        if (!team.matches || (team.matches[this.round - 1].against !== -1 &&
-                              team.matches[this.round - 1].win === 0))
+      return this.teams.some(team => {
+        if (!team.matches)
           return true;
-      return false;
+        return team.matches[this.round - 1].against > -1 &&
+          team.matches[this.round - 1].win === 0;
+      });
     },
     rankedTeams() {
       return Array.from(this.teams).sort((t1, t2) => {
@@ -363,7 +366,9 @@ export default {
         } else { // Qualif
           this.playoffsTeams =
             this.rankedTeams.filter(team => this.nbWins(team) == 3);
-          console.log(this.playoffsTeams);
+          this.remainingSpots = 8 -
+            this.rankedTeams.reduce((acc, team) =>
+              this.nbWins(team) > 3? ++acc : acc, 0);
         }
       }
     },
@@ -509,6 +514,8 @@ aside {
     right: 0;
     width: 10em;
     padding-right: 8px;
+    display: flex;
+    flex-direction: column;
 }
 
 @media (max-width: 600px) {

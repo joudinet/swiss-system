@@ -89,85 +89,7 @@
         </table>
       </template>
       <template v-else>
-        <h2>Phases finales</h2>
-        <div id="bracket">
-          <ul class="round round-1">
-            <li class="spacer">&nbsp;</li>
-            <template v-for="(p, idx) in pairings">
-              <li :key="p[0].name" class="game game-top">
-                <input :id="p[0].name" type="radio"
-                :name="p[0].name"
-                @change="setSemiFinals(idx)"
-                v-model.number="p[2]" :value="1"/>
-                <label :for="p[0].name"
-                :class="{won: p[2] === 1, lost: p[2] === -1}"
-                >{{ p[0].name }}</label>
-              </li>
-              <li :key="p[0].name + p[1].name" class="game game-spacer">
-              </li>
-              <li :key="p[1].name" class="game game-bottom">
-                <input :id="p[1].name" type="radio"
-                :name="p[1].name"
-                @change="setSemiFinals(idx)"
-                v-model.number="p[2]" :value="-1"/>
-                <label :for="p[1].name"
-                :class="{won: p[2] === -1, lost: p[2] === 1}"
-                >{{ p[1].name }}</label>
-              </li>
-              <li :key="p[0].name + 'spacer'" class="spacer">&nbsp;</li>
-            </template>
-          </ul>
-          <ul class="round round-2">
-            <li class="spacer">&nbsp;</li>
-            <template v-for="(s, idx) in semiFinals">
-              <li :key="s[0].name" class="game game-top">
-                <input :id="s[0].name" type="radio"
-                :name="s[0].name"
-                @change="setFinals(idx)"
-                v-model.number="s[2]" :value="1"/>
-                <label :for="s[0].name"
-                :class="{won: s[2] === 1, lost: s[2] === -1}"
-                >{{ s[0].name }}</label>
-              </li>
-              <li :key="s[0].name + s[1].name" class="game game-spacer">
-              </li>
-              <li :key="s[1].name" class="game game-bottom">
-                <input :id="s[1].name" type="radio"
-                :name="s[1].name"
-                @change="setFinals(idx)"
-                v-model.number="s[2]" :value="-1"/>
-                <label :for="s[1].name"
-                :class="{won: s[2] === -1, lost: s[2] === 1}"
-                >{{ s[1].name }}</label>
-              </li>
-              <li :key="s[0].name + 'spacer'" class="spacer">&nbsp;</li>
-            </template>
-          </ul>
-          <ul class="round round-3">
-            <li class="spacer">&nbsp;</li>
-            <template v-for="f in finals">
-              <li :key="f[0].name" class="game game-top">
-                <input :id="f[0].name" type="radio"
-                :name="f[0].name"
-                v-model.number="f[2]" :value="1"/>
-                <label :for="f[0].name"
-                :class="{won: f[2] === 1, lost: f[2] === -1}"
-                >{{ f[0].name }}</label>
-              </li>
-              <li :key="f[0].name + f[1].name" class="game game-spacer">
-              </li>
-              <li :key="f[1].name" class="game game-bottom">
-                <input :id="f[1].name" type="radio"
-                :name="f[1].name"
-                v-model.number="f[2]" :value="-1"/>
-                <label :for="f[1].name"
-                :class="{won: f[2] === -1, lost: f[2] === 1}"
-                >{{ f[1].name }}</label>
-              </li>
-              <li :key="f[0].name + 'spacer'" class="spacer">&nbsp;</li>
-            </template>
-          </ul>
-        </div>
+        <Playoffs :teams="playoffsTeams" />
       </template> <!-- finals -->
 
       <h2>Classement poule Suisse</h2>
@@ -207,20 +129,23 @@
 
 <script>
   import Blossom from 'edmonds-blossom'
+  import Playoffs from './Playoffs.vue'
 
   export default {
     name: 'Swiss',
+    components: {
+      Playoffs
+    },
     data: function() {
       return {
         started: false,
         over: false,
         teams: [],
+        playoffsTeams: [],
         finalsMode: false,
         graph: null,
         matches: [],
         pairings: [],
-        semiFinals: [[{name: "Winner 1st quarterfinal"}, {name: "Winner 2nd quaterfinal"}, 0],[{name: "Winner 3rd quarterfinal"}, {name: "Winner 4th quaterfinal"}, 0]],
-        finals: [[{name: "Winner 1st semifinal"}, {name: "Winner 2nd semifinal"}, 0]],
         maxRounds: 4,
         nbFields: 4,
         matchDuration: 25,
@@ -420,29 +345,11 @@
     },
     startFinals() {
       this.finalsMode = true;
-      this.pairings = [];
+      this.playoffsTeams = [];
       if (this.teams.length >= 8) {
-        this.pairings.push([this.rankedTeams[0], this.rankedTeams[7], 0]);
-        this.pairings.push([this.rankedTeams[3], this.rankedTeams[4], 0]);
-        this.pairings.push([this.rankedTeams[2], this.rankedTeams[5], 0]);
-        this.pairings.push([this.rankedTeams[1], this.rankedTeams[6], 0]);
+        for (let i = 0; i < 8; i++)
+          this.playoffsTeams.push(this.rankedTeams[i]);
       }
-    },
-    setSemiFinals(idx) {
-      if (this.pairings[idx][2] === 1)
-        this.semiFinals[Math.floor(idx / 2)][idx % 2].name =
-      this.pairings[idx][0].name;
-      else
-        this.semiFinals[Math.floor(idx / 2)][idx % 2].name =
-      this.pairings[idx][1].name;
-    },
-    setFinals(idx) {
-      if (this.semiFinals[idx][2] === 1)
-        this.finals[Math.floor(idx / 2)][idx % 2].name =
-      this.semiFinals[idx][0].name;
-      else
-        this.finals[Math.floor(idx / 2)][idx % 2].name =
-      this.semiFinals[idx][1].name;
     },
     reset() {
       console.log("Reset.");
@@ -509,53 +416,6 @@
   }
   #ranking tr:nth-child(even) {
     background-color: whitesmoke;
-  }
-  #bracket {
-    display: flex;
-    flex-direction: row;
-  }
-  .round {
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    margin: 0;
-  }
-  .round .spacer,
-  .round .game-spacer {
-    flex-grow: 1;
-  }
-  .round .spacer:first-child,
-  .round .spacer:last-child {
-    text-align:left;
-  }
-  li.game-top {
-    border-bottom: 1px solid #aaa;
-    padding-top: 2ex;
-    padding-right: 1em;
-    min-height: 40px;
-    text-align:left;
-  }
-  li.game-spacer {
-    border-right: 1px solid #aaa;
-    min-height: 40px;
-    text-align:left;
-  }
-  li.game-bottom {
-    border-bottom: 1px solid #aaa;
-    border-right: 1px solid #aaa;
-    min-height: 40px;
-    padding-top: 2ex;
-    padding-right: 1em;
-    text-align:left;
-  }
-
-  li.game-top input,
-  li.game-spacer input,
-  li.game-bottom input{
-    width: initial;
-    height: initial;
-    padding-left: 2px;
-    margin-left: 10px;
   }
   button.reset {
     padding: 9px 35px;

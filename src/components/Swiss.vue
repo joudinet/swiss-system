@@ -17,6 +17,13 @@
     <template v-if="!started">
       <h3>Configuration du tournoi</h3>
       <div>
+        Type de tournoi :
+        <input type="radio" id="qualif" value="Qualif" v-model="gameType" />
+        <label for="qualif">Qualif</label>
+        <input type="radio" id="maindraw" value="Main draw" v-model="gameType" />
+        <label for="maindraw">Main draw</label>
+      </div>
+      <div>
         <label for="maxRounds">Nb. tours suisse : </label>
         <input id="maxRounds" v-model="maxRounds" type="number" name="maxRounds" />
       </div>
@@ -29,9 +36,7 @@
         <input id="matchDuration" v-model="matchDuration" type="number" name="matchDuration" />
       </div>
       <div>
-        <label for="maxRounds">
-          Durée estimée du tournoi : {{ duration }} min
-        </label>
+        Durée estimée du tournoi : {{ duration }} min
       </div>
 
       <h3>Ajout des équipes</h3>
@@ -72,7 +77,7 @@
             <tr v-for="(m, i) in matches" :key="m[0].name">
               <td class="cell-align-center"><b>M{{ i + 1 }}</b></td>
               <td><input :id="m[0].name" type="radio" :name="m[0].name"
-                         @change="setWinner(m[0])"
+                         @change="setMatchResult(i, m[0], m[1])"
                          v-model.number="m[0].matches[round - 1].win" :value="1"/>
                 <label :for="m[0].name"
                        :class="{won: hasJustWon(m[0]), lost: hasJustLost(m[0])}"
@@ -81,8 +86,8 @@
               <td><label :for="m[1].name"
                          :class="{won: hasJustWon(m[1]), lost: hasJustLost(m[1])}"
                          >{{ m[1].name }}</label>
-                <input :id="m[1].name" type="radio" :name="m[0].name"
-                       @change="setWinner(m[1])"
+                <input :id="m[1].name" type="radio" :name="m[1].name"
+                       @change="setMatchResult(i, m[1], m[0])"
                        v-model.number="m[1].matches[round - 1].win" :value="1"/></td>
             </tr>
           </tbody>
@@ -128,185 +133,190 @@
 </template>
 
 <script>
-  import Blossom from 'edmonds-blossom'
-  import Playoffs from './Playoffs.vue'
+import Blossom from 'edmonds-blossom'
+import Playoffs from './Playoffs.vue'
 
-  export default {
-    name: 'Swiss',
-    components: {
-      Playoffs
-    },
-    data: function() {
-      return {
-        started: false,
-        over: false,
-        teams: [],
-        playoffsTeams: [],
-        finalsMode: false,
-        graph: null,
-        matches: [],
-        pairings: [],
-        maxRounds: 4,
-        nbFields: 4,
-        matchDuration: 25,
-        name: "",
-        score: 0
-      };
-    },
-    mounted() {
-      if (localStorage.getItem('teams')) {
-        try {
-          this.teams = JSON.parse(localStorage.getItem('teams'));
-          this.matches = JSON.parse(localStorage.getItem('matches'));
-          this.pairings = JSON.parse(localStorage.getItem('pairings'));
-          this.maxRounds = Math.floor(Number(localStorage.getItem('max-rounds')))
-          || 4;
-        } catch(e) {
-          localStorage.removeItem('teams');
-          localStorage.removeItem('matches');
-          localStorage.removeItem('pairings');
-          localStorage.removeItem('max-rounds');
-        }
-        this.started = localStorage.getItem('started') === "true";
-        if (this.round >= this.maxRounds)
-          this.over = true;
+export default {
+  name: 'Swiss',
+  components: {
+    Playoffs
+  },
+  data: function() {
+    return {
+      started: false,
+      over: false,
+      teams: [],
+      playoffsTeams: [],
+      finalsMode: false,
+      gameType: "Main draw",
+      graph: null,
+      matches: [],
+      maxRounds: 4,
+      nbFields: 4,
+      matchDuration: 25,
+      name: "",
+      score: 0
+    };
+  },
+  mounted() {
+    if (localStorage.getItem('teams')) {
+      try {
+        this.teams = JSON.parse(localStorage.getItem('teams'));
+        this.matches = JSON.parse(localStorage.getItem('matches'));
+        this.maxRounds =
+          Math.floor(Number(localStorage.getItem('max-rounds'))) || 4;
+        this.gameType = localStorage.getItem('game-type') || "Main draw";
+        console.log("Successfully loaded local storage data", this.teams);
+      } catch(e) {
+        console.warning("error while loading local storage", e.message);
+        localStorage.removeItem('teams');
+        localStorage.removeItem('matches');
+        localStorage.removeItem('max-rounds');
+        localStorage.removeItem('game-type');
       }
+      this.started = localStorage.getItem('started') === "true";
+      if (this.round >= this.maxRounds)
+        this.over = true;
+    }
+  },
+  computed: {
+    round() {
+      if (this.teams.length === 0)
+        return 0;
+      if (!this.teams[0].matches)
+        return 0;
+      return this.teams[0].matches.length;
     },
-    computed: {
-      round() {
-        if (this.teams.length === 0)
-          return 0;
-        if (!this.teams[0].matches)
-          return 0;
-        return this.teams[0].matches.length;
-      },
-      duration() {
-        if (this.nbFields == 0 || this.teams.length === 0)
-          return "0";
+    duration() {
+      if (this.nbFields == 0 || this.teams.length === 0)
+        return "0";
 
-        let seconds =  (Math.ceil(this.teams.length / 2 / this.nbFields)
-            * this.maxRounds + ((this.teams.length >= 5)? 3 : 2))
-            * this.matchDuration * 60;
-        let date = new Date(seconds * 1000);
-        return date.toISOString().substr(11,5).replace(/^[0:]+/, "").replace(':', 'h');
-      },
-      missingResults() {
-        for (const team of this.teams)
-          if (!team.matches || (team.matches[this.round - 1].against !== -1 &&
-            team.matches[this.round - 1].win === 0))
-            return true;
-          return false;
-        },
-        rankedTeams() {
-          return Array.from(this.teams).sort((t1, t2) => {
-            const win1 = this.nbWins(t1);
-            const win2 = this.nbWins(t2);
-            const solkoff1 = this.solkoff(t1);
-            const solkoff2 = this.solkoff(t2);
-            if (win1 === win2) {
-              if (solkoff1 === solkoff2)
-                return this.cumulative(t2) - this.cumulative(t1);
-              return solkoff2 - solkoff1;
-            }
-            return win2 - win1;
-          });
+      let seconds =  (Math.ceil(this.teams.length / 2 / this.nbFields)
+                      * this.maxRounds + ((this.teams.length >= 5)? 3 : 2))
+          * this.matchDuration * 60;
+      let date = new Date(seconds * 1000);
+      return date.toISOString().substr(11,5).replace(/^[0:]+/, "").replace(':', 'h');
+    },
+    missingResults() {
+      for (const team of this.teams)
+        if (!team.matches || (team.matches[this.round - 1].against !== -1 &&
+                              team.matches[this.round - 1].win === 0))
+          return true;
+      return false;
+    },
+    rankedTeams() {
+      return Array.from(this.teams).sort((t1, t2) => {
+        const win1 = this.nbWins(t1);
+        const win2 = this.nbWins(t2);
+        const solkoff1 = this.solkoff(t1);
+        const solkoff2 = this.solkoff(t2);
+        if (win1 === win2) {
+          if (solkoff1 === solkoff2)
+            return this.cumulative(t2) - this.cumulative(t1);
+          return solkoff2 - solkoff1;
         }
-      },
-      methods: {
-        addTeam() {
-          if (!this.name)
-            return;
-          this.teams.push({name: this.name, score: this.score});
-          this.teams.sort(function(a, b) {
-            return b.score - a.score;
-          });
-          this.name = "";
-          this.score = 0;
-          this.saveTeams();
-        },
-        removeTeam(i) {
-          this.teams.splice(i, 1);
-          this.saveTeams();
-        },
-        saveTeams() {
-          const encoded = JSON.stringify(this.teams);
-          localStorage.setItem('teams', encoded);
-        },
-        savePairings() {
-          const encoded = JSON.stringify(this.pairings);
-          localStorage.setItem('pairings', encoded);
-        },
-        saveMatches() {
-          const encoded = JSON.stringify(this.matches);
-          localStorage.setItem('matches', encoded);
-        },
-        hasJustWon(team) {
-          return team.matches[this.round - 1].win === 1;
-        },
-        hasJustLost(team) {
-          return team.matches[this.round - 1].win === -1;
-        },
-        nbWins(team) {
-          if (!team.matches)
-            return 0;
-          return team.matches.reduce((acc, m) => m.win === 1? ++acc : acc, 0);
-        },
-        solkoff(team) {
-          if (!team.matches)
-            return 0;
-          return team.matches.reduce(
-            (acc, m) => acc += this.nbWins(this.teams[m.against]),
-            0);
-        },
-        cumulative(team) {
-          if (!team.matches)
-            return 0;
-          return team.matches.reduce(
-            (acc, m, idx) => m.win === 1? acc += this.round - idx : acc, 0);
-        },
-        setWinner(team) {
-          let j = team.matches[this.round - 1].against;
-          this.$set(team.matches[this.round - 1], 'win', 1);
-          this.$set(this.teams[j].matches[this.round - 1], 'win', -1);
-          this.saveTeams();
-        },
-        start() {
-          if (!this.teams)
-            return;
-          if (this.teams.length % 2) {
-            console.log("Odd number of teams, adding a BYE team.");
-            this.name = "BYE";
-            this.score = this.teams[this.teams.length - 1].score;
-            this.addTeam();
-          }
-          console.log("Start tournament. Do initial pairing according to score.");
-          this.started = true;
-          this.graph = [];
-          for (var i = 0; i < this.teams.length / 2; i++) {
-           this.graph.push([i, this.teams.length / 2 + i, 1]);
-         }
-         this.pairings = Blossom(this.graph);
-         this.teams.forEach( (team, i) => this.$set(team, 'matches',
-          [{against: this.pairings[i], win: 0}]));
-         this.matches = [];
-         this.pairings.forEach((j, i) => {
-           if (j !== -1 && i < j)
-             this.matches.push([this.teams[i], this.teams[j]]);
-         });
-         this.matches.sort((m1, m2) => {
-           return this.nbWins(m2[0]) + this.nbWins(m2[1])
-                - this.nbWins(m1[0]) - this.nbWins(m1[1]);
-         });
-         localStorage.setItem('started', this.started);
-         localStorage.setItem('max-rounds', this.maxRounds);
-         this.saveTeams();
-         this.saveMatches();
-       },
-       nextRound() {
-        if (this.missingResults) {
-          console.log("Please fill in all match results before moving to next round.");
-          return;
-        }
+        return win2 - win1;
+      });
+    }
+  },
+  methods: {
+    addTeam() {
+      if (!this.name)
+        return;
+      this.teams.push({name: this.name, score: this.score});
+      this.teams.sort(function(a, b) {
+        return b.score - a.score;
+      });
+      this.name = "";
+      this.score = 0;
+      this.saveTeams();
+    },
+    removeTeam(i) {
+      this.teams.splice(i, 1);
+      this.saveTeams();
+    },
+    saveTeams() {
+      const encoded = JSON.stringify(this.teams);
+      localStorage.setItem('teams', encoded);
+    },
+    saveMatches() {
+      const encoded = JSON.stringify(this.matches);
+      localStorage.setItem('matches', encoded);
+    },
+    hasJustWon(team) {
+      return team.matches[this.round - 1].win === 1;
+    },
+    hasJustLost(team) {
+      return team.matches[this.round - 1].win === -1;
+    },
+    nbWins(team) {
+      if (!team.matches)
+        return 0;
+      return team.matches.reduce((acc, m) => m.win === 1? ++acc : acc, 0);
+    },
+    solkoff(team) {
+      if (!team.matches)
+        return 0;
+      return team.matches.reduce(
+        (acc, m) => acc += this.nbWins(this.teams[m.against]),
+        0);
+    },
+    cumulative(team) {
+      if (!team.matches)
+        return 0;
+      return team.matches.reduce(
+        (acc, m, idx) => m.win === 1? acc += this.round - idx : acc, 0);
+    },
+    setMatchResult(index, winner, loser) {
+      const rnd = this.round - 1;
+      const j = winner.matches[rnd].against;
+      let i = loser.matches[rnd].against;
+      winner.matches[rnd].win = this.teams[i].matches[rnd].win = 1;
+      loser.matches[rnd].win = this.teams[j].matches[rnd].win = -1;
+      this.saveTeams();
+      this.saveMatches();
+    },
+    start() {
+      if (!this.teams)
+        return;
+      if (this.teams.length % 2) {
+        console.log("Odd number of teams, adding a BYE team.");
+        this.name = "BYE";
+        this.score = this.teams[this.teams.length - 1].score;
+        this.addTeam();
+      }
+      console.log("Start tournament. Do initial pairing according to score.");
+      this.started = true;
+      this.graph = [];
+      for (var i = 0; i < this.teams.length / 2; i++) {
+        this.graph.push([i, this.teams.length / 2 + i, 1]);
+      }
+      let pairings = Blossom(this.graph);
+      this.teams.forEach( (team, i) => {
+        this.$set(team, 'matches', []);
+        team.matches.push({against: pairings[i], win: 0});
+      });
+      let sortedMatches = [];
+      pairings.forEach((j, i) => {
+        if (j !== -1 && i < j)
+          sortedMatches.push([this.teams[i], this.teams[j]]);
+      });
+      sortedMatches.sort((m1, m2) => {
+        return this.nbWins(m2[0]) + this.nbWins(m2[1])
+          - this.nbWins(m1[0]) - this.nbWins(m1[1]);
+      });
+      this.matches = sortedMatches;
+      localStorage.setItem('game-type', this.gameType);
+      localStorage.setItem('started', this.started);
+      localStorage.setItem('max-rounds', this.maxRounds);
+      this.saveTeams();
+      this.saveMatches();
+    },
+    nextRound() {
+      if (this.missingResults) {
+        console.log("Please fill in all match results before moving to next round.");
+        return;
+      }
       // Build a graph where edges are weighted according to win differences.
       this.graph = [];
       this.teams.forEach( (team, i) => {
@@ -326,17 +336,17 @@
         this.over = true;
         return;
       }
-      this.pairings = Blossom(this.graph);
+      let pairings = Blossom(this.graph);
       this.teams.forEach( (team, i) => team.matches.push(
-        {against: this.pairings[i], win: 0}));
+        {against: pairings[i], win: 0}));
       this.matches = [];
-      this.pairings.forEach((j, i) => {
+      pairings.forEach((j, i) => {
         if (j !== -1 && i < j)
           this.matches.push([this.teams[i], this.teams[j]]);
       });
       this.matches.sort((m1, m2) => {
         return this.nbWins(m2[0]) + this.nbWins(m2[1])
-             - this.nbWins(m1[0]) - this.nbWins(m1[1]);
+          - this.nbWins(m1[0]) - this.nbWins(m1[1]);
       });
       if (this.round >= this.maxRounds)
         this.over = true;
@@ -347,8 +357,14 @@
       this.finalsMode = true;
       this.playoffsTeams = [];
       if (this.teams.length >= 8) {
-        for (let i = 0; i < 8; i++)
-          this.playoffsTeams.push(this.rankedTeams[i]);
+        if (this.mode === "Main draw") {
+          for (let i = 0; i < 8; i++)
+            this.playoffsTeams.push(this.rankedTeams[i]);
+        } else { // Qualif
+          this.playoffsTeams =
+            this.rankedTeams.filter(team => this.nbWins(team) == 3);
+          console.log(this.playoffsTeams);
+        }
       }
     },
     reset() {
@@ -357,10 +373,9 @@
       this.over = false;
       this.finalsMode = false;
       this.teams.forEach(team => this.$delete(team, 'matches'));
-      this.pairings = this.matches = [];
+      this.matches = [];
       localStorage.setItem('started', this.started);
       this.saveTeams();
-      this.savePairings();
       this.saveMatches();
     },
   }

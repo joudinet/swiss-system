@@ -317,7 +317,7 @@ export default {
     },
     nextRound() {
       if (this.missingResults) {
-        console.log("Please fill in all match results before moving to next round.");
+        console.warn("missing some match results");
         return;
       }
       // Build a graph where edges are weighted according to win differences.
@@ -466,6 +466,7 @@ export default {
   }
   button.delete:hover,
   button.delete:focus,
+  button.delete:disabled,
   button.delete:active {
    background: #faafaf;
    color: #333;
@@ -498,6 +499,7 @@ button.all {
 
 button.all:hover,
 button.all:focus,
+button.all:disabled,
 button.all:active {
  background: #9ec9f7;
  color: #333;

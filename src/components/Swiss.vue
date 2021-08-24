@@ -360,9 +360,12 @@ export default {
       this.finalsMode = true;
       this.playoffsTeams = [];
       if (this.teams.length >= 8) {
-        if (this.mode === "Main draw") {
+        if (this.gameType === "Main draw") {
           for (let i = 0; i < 8; i++)
             this.playoffsTeams.push(this.rankedTeams[i]);
+          if (this.teams.length >= 11)
+            for (let i = 8; i < 11; i++)
+              this.playoffsTeams.push(this.rankedTeams[i]);
         } else { // Qualif
           this.playoffsTeams =
             this.rankedTeams.filter(team => this.nbWins(team) == 3);

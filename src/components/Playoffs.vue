@@ -2,7 +2,7 @@
 <div id="playoffs">
   <h2>Phases finales <span v-show="spots">(pour {{spots}} places qualificatives)</span></h2>
   <div id="bracket">
-    <ul class="round round-0" v-if="teams.length > 8">
+    <ul class="round round-1" v-if="hasLast16">
       <template v-for="(p, idx) in lastSixteens">
         <li :key="p[0].name">
           <input :id="p[0].name" type="radio"
@@ -17,14 +17,15 @@
           <input :id="p[1].name" type="radio"
                  :name="p[1].name"
                  @change="setQuarterFinals(idx)"
-                 v-model.number="p[2]" :value="-1"/>
+                 v-model.number="p[2]" :value="-1"
+                 v-show="!isFictiveName(p[1].name)"/>
           <label :for="p[1].name"
                  :class="{won: p[2] === -1, lost: p[2] === 1}"
                  >{{ p[1].name }}</label>
         </li>
       </template>
     </ul>
-    <ul class="round round-1">
+    <ul class="round" :class="hasLast16 ? 'round-2' : 'round-1'">
       <template v-for="(p, idx) in quarterFinals">
         <li :key="p[0].name">
           <input :id="p[0].name" type="radio"
@@ -39,14 +40,15 @@
           <input :id="p[1].name" type="radio"
                  :name="p[1].name"
                  @change="setSemiFinals(idx)"
-                 v-model.number="p[2]" :value="-1"/>
+                 v-model.number="p[2]" :value="-1"
+                 v-show="!isFictiveName(p[1].name)"/>
           <label :for="p[1].name"
                  :class="{won: p[2] === -1, lost: p[2] === 1}"
                  >{{ p[1].name }}</label>
         </li>
       </template>
     </ul>
-    <ul class="round round-2">
+    <ul class="round" :class="hasLast16 ? 'round-3' : 'round-2'">
       <template v-for="(s, idx) in semiFinals">
         <li :key="s[0].name">
           <input :id="s[0].name" type="radio"
@@ -68,7 +70,7 @@
         </li>
       </template>
     </ul>
-    <ul class="round round-3">
+    <ul class="round finals" :class="hasLast16 ? 'round-4' : ''">
       <template v-for="(f, idx) in finals">
         <li :key="f[0].name">
           <input :id="f[0].name" type="radio"
@@ -90,7 +92,7 @@
         </li>
       </template>
     </ul>
-    <ul class="round round-4">
+    <ul class="round winners" :class="hasLast16 ? 'round-5' : ''">
       <li v-for="winner in winners" :key="winner"> {{ winner }}</li>
     </ul>
   </div>
@@ -202,6 +204,11 @@ export default {
       }
     }
   },
+  computed: {
+    hasLast16() {
+      return this.teams.length > 8;
+    }
+  },
   methods: {
     setNextRound(idx, current, next) {
       if (current[idx][2] === 1)
@@ -215,22 +222,11 @@ export default {
       this.setNextRound(idx, this.lastSixteens, this.quarterFinals);
     },
     setSemiFinals(idx) {
-      // if (this.quarterFinals[idx][2] === 1)
-      //   this.semiFinals[Math.floor(idx / 2)][idx % 2].name =
-      // this.quarterFinals[idx][0].name;
-      // else
-      //   this.semiFinals[Math.floor(idx / 2)][idx % 2].name =
-      // this.quarterFinals[idx][1].name;
       this.setNextRound(idx, this.quarterFinals, this.semiFinals);
     },
     setFinals(idx) {
-      // if (this.semiFinals[idx][2] === 1)
-      //   this.finals[Math.floor(idx / 2)][idx % 2].name =
-      // this.semiFinals[idx][0].name;
-      // else
-      //   this.finals[Math.floor(idx / 2)][idx % 2].name =
-      // this.semiFinals[idx][1].name;
       this.setNextRound(idx, this.semiFinals, this.finals);
+      // Set loser final
       if (this.semiFinals[idx][2] === -1)
         this.finals[1][idx % 2].name =
       this.semiFinals[idx][0].name;
@@ -244,6 +240,9 @@ export default {
       else
         this.winners[idx] = this.finals[idx][1].name;
     },
+    isFictiveName(name) {
+      return /^[- ]+$/.test(name);
+    }
   }
 }
 </script>
@@ -316,112 +315,58 @@ li:before {
     top: 50%;
 }
 
-/*
-.round-1 li:nth-of-type(odd):after {
+.round-2 li:nth-of-type(odd):after {
     height: 200%;
     top: 50%;
 }
-.round-1 li:nth-of-type(even):after {
+.round-2 li:nth-of-type(even):after {
     height: 200%;
     top: -150%;
 }
 
-.round-2 li:nth-of-type(odd):after {
+.round-3 li:nth-of-type(odd):after,
+.finals li:nth-of-type(odd):after {
     height: 350%;
     top: 50%;
 }
-.round-2 li:nth-of-type(even):after {
+.round-3 li:nth-of-type(even):after,
+.finals li:nth-of-type(even):after {
     height: 350%;
     top: -300%;
 }
 
-.round-3 li:nth-of-type(odd):after {
+.round-4 li:nth-of-type(odd):after,
+.winners li:nth-of-type(odd):after {
     height: 700%;
     top: 50%;
 }
-.round-3 li:nth-of-type(even):after {
+.round-4 li:nth-of-type(even):after,
+.winners li:nth-of-type(even):after {
     height: 700%;
     top: -650%;
 }
 
-.round-4 li:nth-of-type(odd):after {
-    height: 700%;
-    top: 50%;
-}
-.round-4 li:nth-of-type(even):after {
-    height: 700%;
-    top: -650%;
-}
-
-.round:first-of-type li:before {
+.round:first-of-type li:before,
+.round:last-of-type li:after,
+.finals li:nth-child(n+3):before {
     display: none;
 }
 
-.round:last-of-type li:after {
-    display: none;
-}
-
-.round-0, .round-1, .round-2 {
+.round-1, .round-2, .round-3 {
     margin-bottom: 50%;
 }
 
-.round-3 {
+.finals.round-4 {
     margin-top: calc(25% + 1rem);
 }
-.round-3 li:first-of-type {
+.finals.round-4 li:first-of-type {
     top: -15%;
 }
-.round-3 li:nth-child(3) {
+.finals.round-4 li:nth-child(3) {
     top: -5%;
 }
-.round-3 li:nth-child(n+3):before {
-    display:none;
-}
-.round-4 {
+.winners.round-5 {
     margin-top: calc(12.5% + 1rem);
-}
-*/
-.round-2 li:nth-of-type(odd):after {
-    height: 200%;
-    top: 50%;
-}
-.round-2 li:nth-of-type(even):after {
-    height: 200%;
-    top: -150%;
-}
-
-.round-3 li:nth-of-type(odd):after {
-    height: 350%;
-    top: 50%;
-}
-.round-3 li:nth-of-type(even):after {
-    height: 350%;
-    top: -300%;
-}
-
-.round-4 li:nth-of-type(odd):after {
-    height: 700%;
-    top: 50%;
-}
-.round-4 li:nth-of-type(even):after {
-    height: 700%;
-    top: -650%;
-}
-
-.round:first-of-type li:before {
-    display: none;
-}
-
-.round:last-of-type li:after {
-    display: none;
-}
-
-.round-0, .round-1, .round-2 {
-    margin-bottom: 50%;
-}
-
-.round-3 li:nth-child(n+3):before {
-    display:none;
 }
 
 </style>

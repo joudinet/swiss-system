@@ -366,6 +366,9 @@ export default {
           if (this.teams.length >= 11)
             for (let i = 8; i < 11; i++)
               this.playoffsTeams.push(this.rankedTeams[i]);
+          if (this.teams.length >= 16)
+            for (let i = 11; i < 16; i++)
+              this.playoffsTeams.push(this.rankedTeams[i]);
         } else { // Qualif
           this.playoffsTeams =
             this.rankedTeams.filter(team => this.nbWins(team) == 3);

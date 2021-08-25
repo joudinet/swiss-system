@@ -76,18 +76,20 @@
           <input :id="f[0].name" type="radio"
                  :name="f[0].name"
                  @change="setWinner(idx)"
-                 v-model.number="f[2]" :value="1"/>
+                 v-model.number="f[2]" :value="1"
+                 v-show="finalNeeded(idx)" />
           <label :for="f[0].name"
-                 :class="{won: f[2] === 1, lost: f[2] === -1}"
+                 :class="{won: !finalNeeded(idx) || f[2] === 1, lost: f[2] === -1}"
                  >{{ f[0].name }}</label>
         </li>
         <li :key="f[1].name">
           <input :id="f[1].name" type="radio"
                  :name="f[1].name"
                  @change="setWinner(idx)"
-                 v-model.number="f[2]" :value="-1"/>
+                 v-model.number="f[2]" :value="-1"
+                 v-show="finalNeeded(idx)" />
           <label :for="f[1].name"
-                 :class="{won: f[2] === -1, lost: f[2] === 1}"
+                 :class="{won: !finalNeeded(idx) || f[2] === -1, lost: f[2] === 1}"
                  >{{ f[1].name }}</label>
         </li>
       </template>
@@ -203,13 +205,36 @@ export default {
         this.setQuarterFinals(7);
       }
     }
+    if (this.spots >= 3) {
+      this.winners = [" - ", "Qualified #3"];
+      this.finals[0] = [{name: "Qualified #1"}, {name: "Qualified #2"}, 0];
+    }
+    if (this.spots >= 4) {
+      this.winners[1] = "  -  ";
+      this.finals[1] = [{name: "Qualified #3"}, {name: "Qualified #4"}, 0];
+    }
   },
   computed: {
     hasLast16() {
       return this.teams.length > 8;
-    }
+    },
   },
   methods: {
+    finalNeeded(idx) {
+      switch (this.spots) {
+      case 0:
+      case 1:
+        return true;
+      case 2:
+        // Finalists are qualified, loser finalists are eliminated.
+        return false;
+      case 3:
+        return idx > 0;
+      default:
+        // All 4 teams are qualified.
+        return false;
+      }
+    },
     setNextRound(idx, current, next) {
       if (current[idx][2] === 1)
         next[Math.floor(idx / 2)][idx % 2].name =

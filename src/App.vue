@@ -26,7 +26,7 @@ export default {
 }
 .banner {
     height: 50px;
-    padding-bottom: 2mm;
+    padding-bottom: .5em;
     background-image: url('assets/banner_ssa.png');
     background-repeat: no-repeat;
     background-position: center center;

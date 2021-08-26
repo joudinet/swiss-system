@@ -1,17 +1,17 @@
 <template>
   <div class="swiss">
 
-  <aside>
+  <nav>
     <button @click="reset" class="reset">Reset</button>
     <template v-if="!over">
       <button class="start" @click="start()" :disabled="teams.length === 0"
       v-if="!started">Démarrer ({{ teams.length }})</button>
-      <button class="all" @click="nextRound()" :disabled="missingResults"
+      <button @click="nextRound()" :disabled="missingResults"
       v-if="started">Tour suivant</button>
     </template>
-    <button class="all" @click="startFinals()" :disabled="missingResults"
+    <button @click="startFinals()" :disabled="missingResults"
     v-if="over && !finalsMode">Phases finales</button>
-  </aside>
+  </nav>
 
   <main>
     <template v-if="!started">
@@ -24,16 +24,19 @@
         <label for="maindraw">Main draw</label>
       </div>
       <div>
-        <label for="maxRounds">Nb. tours suisse : </label>
-        <input id="maxRounds" v-model="maxRounds" type="number" name="maxRounds" />
+        <label for="maxRounds">Nb. tours poule suisse :</label>
+        <input id="maxRounds" v-model="maxRounds" size="4"
+               type="number" name="maxRounds" />
       </div>
       <div>
-        <label for="nbFields">Nb. terrains disponibles : </label>
-        <input id="nbFields" v-model="nbFields" type="number" name="nbFields" />
+        <label for="nbFields">Nb. terrains disponibles :</label>
+        <input id="nbFields" v-model="nbFields" size="4"
+               type="number" name="nbFields" />
       </div>
       <div>
-        <label for="matchDuration">Durée d'un match (min) : </label>
-        <input id="matchDuration" v-model="matchDuration" type="number" name="matchDuration" />
+        <label for="matchDuration">Durée d'un match (min) :</label>
+        <input id="matchDuration" v-model="matchDuration" size="4"
+               type="number" name="matchDuration" />
       </div>
       <div>
         Durée estimée du tournoi : {{ duration }} min
@@ -41,11 +44,11 @@
 
       <h3>Ajout des équipes</h3>
       <form @submit.prevent="addTeam">
-          <label for="name">Nom : </label>
+          <label for="name">Nom :</label>
           <input id="name" v-model="name" type="text" name="name" />
-          <label for="score">Score : </label>
-          <input id="score" v-model="score" type="number" name="score" />
-          <button class="all">Ajouter équipe</button>
+          <label for="score">Score :</label>
+          <input id="score" v-model="score" size="6" type="number" name="score" />
+          <button>Ajouter équipe</button>
       </form>
 
       <table class="team-list">
@@ -395,24 +398,13 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  form input, .score {
-    margin: 0 1em 0 1ex;
+
+  form button, input, select, textarea {
+  font-family: inherit;
+  font-size: 100%;
   }
-  header {
-    position: fixed;
-    top: 0;
-    right: 0;
-    padding-top: 1ex;
-    padding-right: 1em;
-  }
-  footer {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    padding-bottom: 1ex;
-    padding-right: 1em;
-  }
-  a {
+
+a {
     color: grey;
   }
   label.won {
@@ -443,32 +435,36 @@ export default {
   #ranking tr:nth-child(even) {
     background-color: whitesmoke;
   }
+
+  button {
+      padding: .5em 1.5em;
+      color: #fff;
+      background: #1882f2;
+      border:0;
+      cursor: pointer;
+  }
+
+  button:hover,
+  button:focus,
+  button:disabled,
+  button:active {
+      background: #9ec9f7;
+      color: #333;
+  }
+
   button.reset {
-    padding: 9px 35px;
-    margin-bottom: 20px;
-    color: #fff;
-    font-size: 13px;
-    font-family: inherit;
-    background: #d8302f;
-    border:0;
-    float: left;
+      background: #d8302f;
+      margin-bottom: 1em;
   }
   button.reset:hover,
   button.reset:focus,
   button.reset:active {
    background: #faafaf;
    color: #333;
-   cursor: pointer;
  }
 
  button.delete {
-    padding: 9px 35px;
-    color: #fff;
-    font-size: 13px;
-    font-family: inherit;
     background: #d8302f;
-    border:0;
-    float: left;
   }
   button.delete:hover,
   button.delete:focus,
@@ -476,81 +472,64 @@ export default {
   button.delete:active {
    background: #faafaf;
    color: #333;
-   cursor: pointer;
  }
  button.start {
-  padding: 9px 35px;
-  color: #fff;
-  font-size: 13px;
-  font-family: inherit;
   background: #3fc72a;
-  border:0;
-  float: left;
+  margin: 0.5em 1em;
 }
 button.start:hover,
 button.start:focus,
 button.start:active {
  background: #a6eb9b;
  color: #333;
-   cursor: pointer;
-}
-button.all {
-  padding: 9px 35px;
-  color: #fff;
-  font-size: 13px;
-  font-family: inherit;
-  background: #1882f2;
-  border:0;
 }
 
-button.all:hover,
-button.all:focus,
-button.all:disabled,
-button.all:active {
- background: #9ec9f7;
- color: #333;
-   cursor: pointer;
-}
 main {
-    width: calc(100% - 10em - 8px);
-    margin-right: 8px;
+    margin-right: 10.5em;
     border: 1px solid #e0e0e0;
 }
-aside {
+nav {
     position: absolute;
-    top: calc(50px + 2mm + 8px);
+    top: calc(50px + 1em);
     right: 0;
     width: 10em;
-    padding-right: 8px;
+    padding-right: .5em;
     display: flex;
     flex-direction: column;
 }
 
 @media (max-width: 600px) {
     main {
-        width: auto;
         margin-right: 0;
+        margin-top: 0;
     }
-    aside {
+    nav {
         position: static;
         width: auto;
-        padding-right: 0;
-        height: 43px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        margin-bottom: 0.5em;
     }
-    button.start {
-        float: right;
+
+    button.reset {
+        margin-bottom: 0;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+    }
+    form button {
+        margin: 0 .5em;
     }
 }
 
 main input {
-  height: 10px;
-  font-size: 16px;
   background: #f9f9f9;
   border: 1px solid #ebebeb;
-  margin-bottom: 20px;
-  padding: 10px 20px;
-  padding-right: 5px;
-  font-weight: 300;
+  margin: 0 0.5em 1em 0.5em;
+  padding: 0.5em;
 }
 main input:focus,
 main input:hover,

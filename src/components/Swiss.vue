@@ -3,6 +3,8 @@
 
   <nav>
     <button @click="reset" class="reset">Reset</button>
+    <button @click="prevRound()" class="previous" :disabled="round < 2"
+            v-if="started && !finalsMode">Tour précédent</button>
     <template v-if="!over">
       <button class="start" @click="start()" :disabled="teams.length === 0"
       v-if="!started">Démarrer ({{ teams.length }})</button>
@@ -328,6 +330,20 @@ export default {
       this.saveTeams();
       this.saveMatches();
     },
+    prevRound() {
+      this.matches = [];
+      this.teams.forEach( (team, i) => {
+        this.$delete(team.matches, team.matches.length - 1);
+        const j = team.matches[team.matches.length - 1].against;
+        if (i < j)
+          this.matches.push([this.teams[i], this.teams[j]]);
+      });
+      this.matches.sort((m1, m2) => {
+        return this.nbWins(m2[0]) + this.nbWins(m2[1])
+          - this.nbWins(m1[0]) - this.nbWins(m1[1]);
+      });
+      this.over = false;
+    },
     nextRound() {
       if (this.missingResults) {
         console.warn("missing some match results");
@@ -475,6 +491,18 @@ a {
    color: #333;
  }
 
+  button.previous {
+      background: #ff9a22;
+      margin-bottom: 1em;
+  }
+  button.previous:hover,
+  button.previous:focus,
+  button.previous:disabled,
+  button.previous:active {
+   background: #ffc177;
+   color: #333;
+ }
+
  button.delete {
     background: #d8302f;
   }
@@ -523,7 +551,8 @@ nav {
         margin-bottom: 0.5em;
     }
 
-    button.reset {
+    button.reset,
+    button.previous {
         margin-bottom: 0;
     }
 

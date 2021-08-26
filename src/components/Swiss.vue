@@ -16,24 +16,24 @@
   <main>
     <template v-if="!started">
       <h3>Configuration du tournoi</h3>
-      <div>
+      <div class="config">
         Type de tournoi :
         <input type="radio" id="qualif" value="Qualif" v-model="gameType" />
         <label for="qualif">Qualif</label>
         <input type="radio" id="maindraw" value="Main draw" v-model="gameType" />
         <label for="maindraw">Main draw</label>
       </div>
-      <div>
+      <div class="config">
         <label for="maxRounds">Nb. tours poule suisse :</label>
         <input id="maxRounds" v-model="maxRounds" size="4"
                type="number" name="maxRounds" />
       </div>
-      <div>
+      <div class="config">
         <label for="nbFields">Nb. terrains disponibles :</label>
         <input id="nbFields" v-model="nbFields" size="4"
                type="number" name="nbFields" />
       </div>
-      <div>
+      <div class="config">
         <label for="matchDuration">Durée d'un match (min) :</label>
         <input id="matchDuration" v-model="matchDuration" size="4"
                type="number" name="matchDuration" />
@@ -45,9 +45,10 @@
       <h3>Ajout des équipes</h3>
       <form @submit.prevent="addTeam">
           <label for="name">Nom :</label>
-          <input id="name" v-model="name" type="text" name="name" />
+          <input id="name" v-model.trim="name" type="text" name="name" />
           <label for="score">Score :</label>
-          <input id="score" v-model="score" size="6" type="number" name="score" />
+          <input id="score" v-model.number="score" size="6"
+                 type="number" name="score" />
           <button>Ajouter équipe</button>
       </form>
 
@@ -61,10 +62,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(team, n) in teams" :key="team.name">
+          <tr v-for="(team, n) in orderedTeams" :key="team.name">
             <td class="cell-align-center">{{ n + 1 }}</td>
             <td>{{ team.name }}</td>
-            <td>{{ team.score }}</td>
+            <td><input :id="'score-' + n" v-model.number.lazy="team.score" size="6" type="number" name="score" /></td>
             <td class="cell-align-center"><button style="float: none;" @click="removeTeam(n)" class="delete">Supprimer</button></td>
           </tr>
         </tbody>
@@ -210,6 +211,11 @@ export default {
           team.matches[this.round - 1].win === 0;
       });
     },
+    orderedTeams() {
+      return Array.from(this.teams).sort((t1, t2) => {
+        return t2.score - t1.score;
+      });
+    },
     rankedTeams() {
       return Array.from(this.teams).sort((t1, t2) => {
         const win1 = this.nbWins(t1);
@@ -285,6 +291,10 @@ export default {
     start() {
       if (!this.teams)
         return;
+      // Sort teams according to their score
+      this.teams.sort((t1, t2) => {
+        return t2.score - t1.score;
+      });
       if (this.teams.length % 2) {
         console.log("Odd number of teams, adding a BYE team.");
         this.name = "BYE";
@@ -475,7 +485,6 @@ a {
  }
  button.start {
   background: #3fc72a;
-  margin: 0.5em 1em;
 }
 button.start:hover,
 button.start:focus,
@@ -528,9 +537,15 @@ nav {
 main input {
   background: #f9f9f9;
   border: 1px solid #ebebeb;
-  margin: 0 0.5em 1em 0.5em;
+  margin: 0 0.5em;
   padding: 0.5em;
 }
+
+form input,
+div.config {
+    margin-bottom: 1em;
+}
+
 main input:focus,
 main input:hover,
 main input:active {
@@ -538,6 +553,7 @@ main input:active {
   color:#1882f2;
   ;
 }
+
 .team-list {
   border: 1px solid #ebebeb;
   width: 100%;
@@ -559,7 +575,7 @@ main input:active {
   border-bottom: 1px solid #ebebeb;
   text-align: center;
   vertical-align: center;
-  padding: 2px;
+  padding: .5em;
 }
 .cell-align-center {
     text-align: center;

@@ -339,11 +339,13 @@ export default {
         for (let j = i + 1; j < this.teams.length; j++) {
           if (!team.matches.find(m => m.against === j)) {
             let weight = 1;
-            let diff = Math.abs(this.nbWins(team) - this.nbWins(this.teams[j]));
-            if (diff === 0)
-              weight = 100;
-            else if (diff === 1)
-              weight = 80;
+            const win_diff =
+                Math.abs(this.nbWins(team) - this.nbWins(this.teams[j]));
+            const score_diff = Math.abs(i - j);
+            if (win_diff === 0)
+              weight = 100 + score_diff;
+            else if (win_diff === 1)
+              weight = 60 + score_diff;
             this.graph.push([i, j, weight]);
           }
         }

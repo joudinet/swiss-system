@@ -29,17 +29,17 @@
       </div>
       <div class="config">
         <label for="maxRounds">Nb. tours poule suisse :</label>
-        <input id="maxRounds" v-model="maxRounds" size="4"
+        <input id="maxRounds" v-model="maxRounds"
                type="number" name="maxRounds" />
       </div>
       <div class="config">
         <label for="nbFields">Nb. terrains disponibles :</label>
-        <input id="nbFields" v-model="nbFields" size="4"
+        <input id="nbFields" v-model="nbFields"
                type="number" name="nbFields" />
       </div>
       <div class="config">
         <label for="matchDuration">Durée d'un match (min) :</label>
-        <input id="matchDuration" v-model="matchDuration" size="4"
+        <input id="matchDuration" v-model="matchDuration"
                type="number" name="matchDuration" />
       </div>
       <div>
@@ -51,7 +51,7 @@
           <label for="name">Nom :</label>
           <input id="name" v-model.trim="name" type="text" name="name" />
           <label for="score">Score :</label>
-          <input id="score" v-model.number="score" size="6"
+          <input id="score" v-model.number="score" class="score"
                  type="number" name="score" />
           <button>Ajouter équipe</button>
       </form>
@@ -69,7 +69,7 @@
           <tr v-for="(team, n) in orderedTeams" :key="team.name">
             <td class="cell-align-center">{{ n + 1 }}</td>
             <td>{{ team.name }}</td>
-            <td><input :id="'score-' + n" v-model.number.lazy="team.score" size="6" type="number" name="score" /></td>
+            <td><input :id="'score-' + n" v-model.number.lazy="team.score" class="score" type="number" name="score" /></td>
             <td class="cell-align-center"><button style="float: none;" @click="removeTeam(n)" class="delete">Supprimer</button></td>
           </tr>
         </tbody>
@@ -83,15 +83,15 @@
         <table class="match-list">
           <tbody>
             <tr v-for="(m, i) in matches" :key="m[0].name">
-              <td class="cell-align-center"><b>M{{ i + 1 }}</b></td>
-              <td><input :id="m[0].name" type="radio" :name="m[0].name"
+              <td><b>M{{ i + 1 }}</b></td>
+              <td class="left"><input :id="m[0].name" type="radio" :name="m[0].name"
                          @change="setMatchResult(i, m[0], m[1])"
                          v-model.number="m[0].matches[round - 1].win" :value="1"/>
                 <label :for="m[0].name"
                        :class="{won: hasJustWon(m[0]), lost: hasJustLost(m[0])}"
                        >{{ m[0].name }}</label></td>
               <td><b>VS</b></td>
-              <td><label :for="m[1].name"
+              <td class="right"><label :for="m[1].name"
                          :class="{won: hasJustWon(m[1]), lost: hasJustLost(m[1])}"
                          >{{ m[1].name }}</label>
                 <input :id="m[1].name" type="radio" :name="m[1].name"
@@ -626,6 +626,7 @@ nav {
     form {
         display: flex;
         flex-direction: column;
+        align-items: center;
     }
     form button {
         margin: 0 .5em;
@@ -639,9 +640,18 @@ main input {
   padding: 0.5em;
 }
 
+main input[type='radio'] {
+    margin: 0;
+}
+
 form input,
 div.config {
     margin-bottom: 1em;
+}
+
+.config input,
+input.score {
+    width: 3em;
 }
 
 main input:focus,
@@ -655,27 +665,39 @@ main input:active {
 .team-list {
   border: 1px solid #ebebeb;
   width: 100%;
-  margin-top: 70px;
+  margin-top: 2em;
 }
 .team-list thead {
   text-align: center;
   align-content: center;
   background-color: #ebebeb;
 }
-.team-list td{
+.team-list td {
   border-top: 1px solid #ebebeb;
   padding: 2px;
 }
-.match-list{
-  width: 100%;
+.match-list {
+    width: 100%;
+}
+.match-list tr {
+    display: grid;
+    grid-template-columns: repeat(2, auto 1fr);
+    border-bottom: 1px solid #ebebeb;
+    padding: 0.5em 0;
 }
 .match-list td {
-  border-bottom: 1px solid #ebebeb;
-  text-align: center;
-  vertical-align: center;
-  padding: .5em;
+  display: flex;
+  place-items: center;
 }
-.cell-align-center {
-    text-align: center;
+
+.match-list td.left,
+.match-list td.right {
+    place-content: center;
+}
+.match-list .left input[type='radio'] {
+    margin: 0 0.25em;
+}
+.match-list .right input[type='radio'] {
+    margin-left: 0.25em;
 }
 </style>

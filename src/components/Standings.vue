@@ -27,11 +27,14 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  li.qualified {
-  color: green;
-  font-weight: bold;
-  }
-  li.qualified:before {
-  color: green;
-  }
+ol {
+    white-space: nowrap;
+}
+li.qualified {
+    color: green;
+    font-weight: bold;
+}
+li.qualified:before {
+    color: green;
+}
 </style>

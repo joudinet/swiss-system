@@ -33,6 +33,11 @@
                type="number" name="maxRounds" />
       </div>
       <div class="config">
+        <label for="spots">Nb. équipes qualifiées :</label>
+        <input id="spots" v-model="spots"
+               type="number" name="spots" />
+      </div>
+      <div class="config">
         <label for="nbFields">Nb. terrains disponibles :</label>
         <input id="nbFields" v-model="nbFields"
                type="number" name="nbFields" />
@@ -108,7 +113,7 @@
         </template>
         <template v-else>
           <Standings :teams="finalStandings"
-                     :spots="gameType === 'Main draw'? 0 : 8" />
+                     :spots="gameType === 'Main draw'? 0 : this.spots" />
         </template>
       </template> <!-- finals -->
 
@@ -168,6 +173,7 @@ export default {
       playoffsTeams: [],
       finalStandings: [],
       remainingSpots: 0,
+      spots: 8,
       finalsMode: false,
       gameType: "Main draw",
       graph: null,
@@ -187,12 +193,15 @@ export default {
         this.maxRounds =
           Math.floor(Number(localStorage.getItem('max-rounds'))) || 4;
         this.gameType = localStorage.getItem('game-type') || "Main draw";
+        this.spots =
+          Math.floor(Number(localStorage.getItem('spots'))) || 8;
       } catch(e) {
         console.warning("error while loading local storage", e.message);
         localStorage.removeItem('teams');
         localStorage.removeItem('matches');
         localStorage.removeItem('max-rounds');
         localStorage.removeItem('game-type');
+        localStorage.removeItem('spots');
       }
       this.started = localStorage.getItem('started') === "true";
       if (this.round >= this.maxRounds)
@@ -247,6 +256,7 @@ export default {
       });
     }
   },
+
   methods: {
     addTeam() {
       if (!this.name)
@@ -341,6 +351,7 @@ export default {
       localStorage.setItem('game-type', this.gameType);
       localStorage.setItem('started', this.started);
       localStorage.setItem('max-rounds', this.maxRounds);
+      localStorage.setItem('spots', this.spots);
       this.saveTeams();
       this.saveMatches();
     },
@@ -401,28 +412,37 @@ export default {
       this.saveTeams();
       this.saveMatches();
     },
+
     startFinals() {
       this.finalsMode = true;
       this.playoffsTeams = [];
-      if (this.teams.length >= 8) {
-        if (this.gameType === "Main draw") {
-          for (let i = 0; i < 8; i++)
-            this.playoffsTeams.push(this.rankedTeams[i]);
-          if (this.teams.length >= 11)
-            for (let i = 8; i < 11; i++)
-              this.playoffsTeams.push(this.rankedTeams[i]);
-          if (this.teams.length >= 16)
-            for (let i = 11; i < 16; i++)
-              this.playoffsTeams.push(this.rankedTeams[i]);
-        } else { // Qualif
-          this.playoffsTeams =
-            this.rankedTeams.filter(team => this.nbWins(team) == 3);
-          this.remainingSpots = 8 -
-            this.rankedTeams.reduce((acc, team) =>
-              this.nbWins(team) > 3? ++acc : acc, 0);
+      if (this.gameType === "Main draw") {
+        for (let i = 0; i < Math.min(this.spots, this.teams.length); i++)
+          this.playoffsTeams.push(this.rankedTeams[i]);
+      } else { // Qualif
+        let remaining = this.spots;
+        let nbWins = this.nbWins(this.rankedTeams[0]);
+        while (remaining > 0 && this.playoffsTeams.length === 0) {
+          const pool = this.rankedTeams.filter(team => {
+            return this.nbWins(team) == nbWins;
+          });
+          console.log(pool);
+          if (remaining < pool.length) {
+            this.playoffsTeams = pool;
+            this.remainingSpots = remaining;
+          } else {
+            --nbWins;
+            remaining -= pool.length;
+          }
+        }
+        if (remaining === 0) {
+          // No Playoffs to do, show results directly.
+          this.getFinalStandings([]);
+          this.showFinalStandings();
         }
       }
     },
+
     getFinalStandings(playoffsResults) {
       this.playoffsOver = true;
       console.log(playoffsResults);
@@ -436,7 +456,7 @@ export default {
             return {rank: 9, name: team};
         });
       else {
-        const nDirectQualified = 8 - this.remainingSpots;
+        const nDirectQualified = this.spots - this.remainingSpots;
         this.finalStandings =
           this.rankedTeams.slice(0, nDirectQualified).map((team, n) => {
             return {rank: n + 1, name: team.name};

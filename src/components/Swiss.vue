@@ -7,12 +7,14 @@
             v-if="started && !finalsMode">Tour précédent</button>
     <template v-if="!over">
       <button class="start" @click="start()" :disabled="teams.length === 0"
-      v-if="!started">Démarrer ({{ teams.length }})</button>
+              v-if="!started">Démarrer ({{ teams.length }})</button>
       <button @click="nextRound()" :disabled="missingResults"
-      v-if="started">Tour suivant</button>
+              v-if="started">Tour suivant</button>
     </template>
     <button @click="startFinals()" :disabled="missingResults"
-    v-if="over && !finalsMode">Phases finales</button>
+            v-if="over && !finalsMode">Phases finales</button>
+    <button @click="showFinalStandings()"
+            v-if="over && playoffsOver">Classement final</button>
   </nav>
 
   <main>
@@ -100,7 +102,14 @@
         </table>
       </template>
       <template v-else>
-        <Playoffs :teams="playoffsTeams" :spots="remainingSpots"/>
+        <template v-if="!showResults">
+          <Playoffs :teams="playoffsTeams" :spots="remainingSpots"
+                    @results="getFinalStandings"/>
+        </template>
+        <template v-else>
+          <Standings :teams="finalStandings"
+                     :spots="gameType === 'Main draw'? 0 : 8" />
+        </template>
       </template> <!-- finals -->
 
       <h2>Classement poule Suisse</h2>
@@ -141,18 +150,23 @@
 <script>
 import Blossom from 'edmonds-blossom'
 import Playoffs from './Playoffs.vue'
+import Standings from './Standings.vue'
 
 export default {
   name: 'Swiss',
   components: {
-    Playoffs
+    Playoffs,
+    Standings
   },
   data: function() {
     return {
       started: false,
       over: false,
+      playoffsOver: false,
+      showResults: false,
       teams: [],
       playoffsTeams: [],
+      finalStandings: [],
       remainingSpots: 0,
       finalsMode: false,
       gameType: "Main draw",
@@ -408,6 +422,59 @@ export default {
               this.nbWins(team) > 3? ++acc : acc, 0);
         }
       }
+    },
+    getFinalStandings(playoffsResults) {
+      this.playoffsOver = true;
+      console.log(playoffsResults);
+      if (this.gameType === "Main draw")
+        this.finalStandings = playoffsResults.map((team, n) => {
+          if (n < 4)
+            return {rank: n+1, name: team};
+          if (n < 8)
+            return {rank: 5, name: team};
+          if (n < 16)
+            return {rank: 9, name: team};
+        });
+      else {
+        const nDirectQualified = 8 - this.remainingSpots;
+        this.finalStandings =
+          this.rankedTeams.slice(0, nDirectQualified).map((team, n) => {
+            return {rank: n + 1, name: team.name};
+          }).concat(playoffsResults.map((team, n) => {
+            if (n < 2) {
+              if (this.remainingSpots < 2)
+                return {rank: n + nDirectQualified + 1, name: team};
+              else
+                return {rank: 1 + nDirectQualified, name: team};
+            }
+            if (n < 4) {
+              if (this.remainingSpots < 4)
+                return {rank: n + nDirectQualified + 1, name: team};
+              else
+                return {rank: 1 + nDirectQualified, name: team};
+            }
+            if (n < 8)
+              return {rank: 5 + nDirectQualified, name: team};
+            if (n < 16)
+              return {rank: 9 + nDirectQualified, name: team};
+          }));
+      }
+      let nbWins = this.nbWins(this.rankedTeams[this.finalStandings.length]);
+      let rank = this.finalStandings.length + 1;
+      while (nbWins >= 0 && this.finalStandings.length < this.teams.length) {
+        const pool = this.rankedTeams.filter(team => {
+          return this.nbWins(team) === nbWins;
+        }).map(team => {
+          return {rank: rank, name: team.name};
+        });
+        if (pool.length > 0)
+          this.finalStandings = this.finalStandings.concat(pool);
+        rank = rank + pool.length;
+        nbWins = nbWins - 1;
+      }
+    },
+    showFinalStandings() {
+      this.showResults = true;
     },
     reset() {
       console.log("Reset.");

@@ -54,23 +54,26 @@
           <input :id="s[0].name" type="radio"
                  :name="s[0].name"
                  @change="setFinals(idx)"
-                 v-model.number="s[2]" :value="1"/>
+                 v-model.number="s[2]" :value="1"
+                 v-show="semifinalNeeded"/>
           <label :for="s[0].name"
-                 :class="{won: s[2] === 1, lost: s[2] === -1}"
+                 :class="{won: !semifinalNeeded || s[2] === 1, lost: s[2] === -1}"
                  >{{ s[0].name }}</label>
         </li>
         <li :key="s[1].name">
           <input :id="s[1].name" type="radio"
                  :name="s[1].name"
                  @change="setFinals(idx)"
-                 v-model.number="s[2]" :value="-1"/>
+                 v-model.number="s[2]" :value="-1"
+                 v-show="semifinalNeeded"/>
           <label :for="s[1].name"
-                 :class="{won: s[2] === -1, lost: s[2] === 1}"
+                 :class="{won: !semifinalNeeded || s[2] === -1, lost: s[2] === 1}"
                  >{{ s[1].name }}</label>
         </li>
       </template>
     </ul>
-    <ul class="round finals" :class="hasLast16 ? 'round-4' : ''">
+    <ul class="round finals" :class="hasLast16 ? 'round-4' : ''"
+        v-if="semifinalNeeded">
       <template v-for="(f, idx) in finals">
         <li :key="f[0].name">
           <input :id="f[0].name" type="radio"
@@ -94,7 +97,8 @@
         </li>
       </template>
     </ul>
-    <ul class="round winners" :class="hasLast16 ? 'round-5' : ''">
+    <ul class="round winners" :class="hasLast16 ? 'round-5' : ''"
+        v-if="semifinalNeeded">
       <li v-for="winner in winners" :key="winner"> {{ winner }}</li>
     </ul>
   </div>
@@ -108,6 +112,7 @@ export default {
     teams: { type: Array, required: true },
     spots: { type: Number, default: 0 }
   },
+  emits: ['results'],
   data() {
     return {
       lastSixteens: [],
@@ -210,15 +215,24 @@ export default {
       this.finals[0] = [{name: "Qualified #1"}, {name: "Qualified #2"}, 0];
     }
     if (this.spots >= 4) {
-      this.winners[1] = "  -  ";
-      this.finals[1] = [{name: "Qualified #3"}, {name: "Qualified #4"}, 0];
+      this.winners = [];
+      this.finals = [];
+      this.semiFinals = [
+        [{name: "Qualified #1"}, {name: "Qualified #2"}, 0],
+        [{name: "Qualified #3"}, {name: "Qualified #4"}, 0]
+      ];
     }
   },
+
   computed: {
     hasLast16() {
       return this.teams.length > 8;
     },
+    semifinalNeeded() {
+      return this.spots < 4;
+    },
   },
+
   methods: {
     finalNeeded(idx) {
       switch (this.spots) {
@@ -248,22 +262,92 @@ export default {
     },
     setSemiFinals(idx) {
       this.setNextRound(idx, this.quarterFinals, this.semiFinals);
+      if (this.spots >= 4) {
+        let ranks = [
+          this.semiFinals[0][0].name,
+          this.semiFinals[0][1].name,
+          this.semiFinals[1][0].name,
+          this.semiFinals[1][1].name,
+        ];
+
+        // 5th to 8th
+        this.quarterFinals.forEach( match => {
+          if (match[2] === 1) {
+            if (!this.isFictiveName(match[1].name))
+              ranks.push(match[1].name);
+          } else
+            ranks.push(match[0].name);
+        });
+
+        if (this.teams.length > 8) {
+          // 9th to 16th
+          this.lastSixteens.forEach( match => {
+            if (match[2] === 1) {
+              if (!this.isFictiveName(match[1].name))
+                ranks.push(match[1].name);
+            } else
+              ranks.push(match[0].name);
+          });
+        }
+
+        this.$emit('results', ranks);
+      }
     },
     setFinals(idx) {
       this.setNextRound(idx, this.semiFinals, this.finals);
       // Set loser final
       if (this.semiFinals[idx][2] === -1)
         this.finals[1][idx % 2].name =
-      this.semiFinals[idx][0].name;
+        this.semiFinals[idx][0].name;
       else
         this.finals[1][idx % 2].name =
-      this.semiFinals[idx][1].name;
+        this.semiFinals[idx][1].name;
     },
     setWinner(idx) {
       if (this.finals[idx][2] === 1)
         this.winners[idx] = this.finals[idx][0].name;
       else
         this.winners[idx] = this.finals[idx][1].name;
+
+      // Rank teams according to their final standing.
+      let ranks = [];
+      // 1st
+      if (this.spots < 2)
+        ranks.push(this.winners[0]);
+
+      // 2nd
+      if (this.finals[0][2] === -1 || this.spots === 3)
+        ranks.push(this.finals[0][0].name);
+      if (this.finals[0][2] === 1 || this.spots === 3)
+        ranks.push(this.finals[0][1].name);
+      // 3rd and 4rd
+      ranks.push(this.winners[1]);
+      if (this.finals[1][2] === -1)
+        ranks.push(this.finals[1][0].name);
+      if (this.finals[1][2] === 1)
+        ranks.push(this.finals[1][1].name);
+
+      // 5th to 8th
+      this.quarterFinals.forEach( match => {
+        if (match[2] === 1) {
+          if (!this.isFictiveName(match[1].name))
+            ranks.push(match[1].name);
+        } else
+          ranks.push(match[0].name);
+      });
+
+      if (this.teams.length > 8) {
+        // 9th to 16th
+        this.lastSixteens.forEach( match => {
+          if (match[2] === 1) {
+            if (!this.isFictiveName(match[1].name))
+              ranks.push(match[1].name);
+          } else
+            ranks.push(match[0].name);
+        });
+      }
+
+      this.$emit('results', ranks);
     },
     isFictiveName(name) {
       return /^[- ]+$/.test(name);

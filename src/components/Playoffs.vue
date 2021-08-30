@@ -5,21 +5,21 @@
     <ul class="round round-1" v-if="hasLast16">
       <template v-for="(p, idx) in lastSixteens">
         <li :key="p[0].name">
-          <input :id="p[0].name" type="radio"
+          <input :id="'r0' + p[0].name" type="radio"
                  :name="p[0].name"
                  @change="setQuarterFinals(idx)"
                  v-model.number="p[2]" :value="1"/>
-          <label :for="p[0].name"
+          <label :for="'r0' + p[0].name"
                  :class="{won: p[2] === 1, lost: p[2] === -1}"
                  >{{ p[0].name }}</label>
         </li>
         <li :key="p[1].name">
-          <input :id="p[1].name" type="radio"
+          <input :id="'r0' + p[1].name" type="radio"
                  :name="p[1].name"
                  @change="setQuarterFinals(idx)"
                  v-model.number="p[2]" :value="-1"
                  v-show="!isFictiveName(p[1].name)"/>
-          <label :for="p[1].name"
+          <label :for="'r0' + p[1].name"
                  :class="{won: p[2] === -1, lost: p[2] === 1}"
                  >{{ p[1].name }}</label>
         </li>
@@ -28,21 +28,21 @@
     <ul class="round" :class="hasLast16 ? 'round-2' : 'round-1'">
       <template v-for="(p, idx) in quarterFinals">
         <li :key="p[0].name">
-          <input :id="p[0].name" type="radio"
+          <input :id="'r1' + p[0].name" type="radio"
                  :name="p[0].name"
                  @change="setSemiFinals(idx)"
                  v-model.number="p[2]" :value="1"/>
-          <label :for="p[0].name"
+          <label :for="'r1' + p[0].name"
                  :class="{won: p[2] === 1, lost: p[2] === -1}"
                  >{{ p[0].name }}</label>
         </li>
         <li :key="p[1].name">
-          <input :id="p[1].name" type="radio"
+          <input :id="'r1' + p[1].name" type="radio"
                  :name="p[1].name"
                  @change="setSemiFinals(idx)"
                  v-model.number="p[2]" :value="-1"
                  v-show="!isFictiveName(p[1].name)"/>
-          <label :for="p[1].name"
+          <label :for="'r1' + p[1].name"
                  :class="{won: p[2] === -1, lost: p[2] === 1}"
                  >{{ p[1].name }}</label>
         </li>
@@ -51,22 +51,22 @@
     <ul class="round" :class="hasLast16 ? 'round-3' : 'round-2'">
       <template v-for="(s, idx) in semiFinals">
         <li :key="s[0].name">
-          <input :id="s[0].name" type="radio"
+          <input :id="'semi' + s[0].name" type="radio"
                  :name="s[0].name"
                  @change="setFinals(idx)"
                  v-model.number="s[2]" :value="1"
                  v-show="semifinalNeeded"/>
-          <label :for="s[0].name"
+          <label :for="'semi' + s[0].name"
                  :class="{won: !semifinalNeeded || s[2] === 1, lost: s[2] === -1}"
                  >{{ s[0].name }}</label>
         </li>
         <li :key="s[1].name">
-          <input :id="s[1].name" type="radio"
+          <input :id="'semi' + s[1].name" type="radio"
                  :name="s[1].name"
                  @change="setFinals(idx)"
                  v-model.number="s[2]" :value="-1"
                  v-show="semifinalNeeded"/>
-          <label :for="s[1].name"
+          <label :for="'semi' + s[1].name"
                  :class="{won: !semifinalNeeded || s[2] === -1, lost: s[2] === 1}"
                  >{{ s[1].name }}</label>
         </li>
@@ -76,22 +76,22 @@
         v-if="semifinalNeeded">
       <template v-for="(f, idx) in finals">
         <li :key="f[0].name">
-          <input :id="f[0].name" type="radio"
+          <input :id="'final' + f[0].name" type="radio"
                  :name="f[0].name"
                  @change="setWinner(idx)"
                  v-model.number="f[2]" :value="1"
                  v-show="finalNeeded(idx)" />
-          <label :for="f[0].name"
+          <label :for="'final' + f[0].name"
                  :class="{won: !finalNeeded(idx) || f[2] === 1, lost: f[2] === -1}"
                  >{{ f[0].name }}</label>
         </li>
         <li :key="f[1].name">
-          <input :id="f[1].name" type="radio"
+          <input :id="'final' + f[1].name" type="radio"
                  :name="f[1].name"
                  @change="setWinner(idx)"
                  v-model.number="f[2]" :value="-1"
                  v-show="finalNeeded(idx)" />
-          <label :for="f[1].name"
+          <label :for="'final' + f[1].name"
                  :class="{won: !finalNeeded(idx) || f[2] === -1, lost: f[2] === 1}"
                  >{{ f[1].name }}</label>
         </li>

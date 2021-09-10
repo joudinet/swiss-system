@@ -1,6 +1,6 @@
 <template>
 <div id="playoffs">
-  <h2>Phases finales <span v-show="spots">(pour {{spots}} places qualificatives)</span></h2>
+  <h2>{{title}}<span v-show="spots"> (pour {{spots}} places qualificatives)</span></h2>
   <div id="bracket">
     <ul class="round round-1" v-if="hasLast16">
       <template v-for="(p, idx) in lastSixteens">
@@ -110,9 +110,10 @@ export default {
   name: 'Playoffs',
   props: {
     teams: { type: Array, required: true },
+    title: { type: String, default: "Phases finales" },
     spots: { type: Number, default: 0 }
   },
-  emits: ['results'],
+  emits: [ 'loser', 'results' ],
   data() {
     return {
       lastSixteens: [],
@@ -133,95 +134,9 @@ export default {
       winners: ["Winner", "3rd place"],
     };
   },
+
   mounted() {
-    if (this.teams.length <= 8) {
-      this.quarterFinals = [];
-      if (this.teams.length >= 8)
-        this.quarterFinals.push([this.teams[0], this.teams[7], 0]);
-      else {
-        this.quarterFinals.push([this.teams[0], {name: " -"}, 1]);
-        this.setSemiFinals(0);
-      }
-      if (this.teams.length >= 5)
-        this.quarterFinals.push([this.teams[3], this.teams[4], 0]);
-      else {
-        this.quarterFinals.push([this.teams[3], {name: "    -"}, 1]);
-        this.setSemiFinals(1);
-      }
-      if (this.teams.length >= 6)
-        this.quarterFinals.push([this.teams[2], this.teams[5], 0]);
-      else {
-        this.quarterFinals.push([this.teams[2], {name: "   -"}, 1]);
-        this.setSemiFinals(2);
-      }
-      if (this.teams.length >= 7)
-        this.quarterFinals.push([this.teams[1], this.teams[6], 0]);
-      else {
-        this.quarterFinals.push([this.teams[1], {name: "  -"}, 1]);
-        this.setSemiFinals(3);
-      }
-    } else { // last 16
-      if (this.teams.length >= 16)
-        this.lastSixteens.push([this.teams[0], this.teams[15], 0]);
-      else {
-        this.lastSixteens.push([this.teams[0], {name: "-"}, 1]);
-        this.setQuarterFinals(0);
-      }
-      if (this.teams.length >= 9)
-        this.lastSixteens.push([this.teams[7], this.teams[8], 0]);
-      else {
-        this.lastSixteens.push([this.teams[7], {name: "-       "}, 1]);
-        this.setQuarterFinals(1);
-      }
-      if (this.teams.length >= 12)
-        this.lastSixteens.push([this.teams[4], this.teams[11], 0]);
-      else {
-        this.lastSixteens.push([this.teams[4], {name: "-    "}, 1]);
-        this.setQuarterFinals(2);
-      }
-      if (this.teams.length >= 13)
-        this.lastSixteens.push([this.teams[3], this.teams[12], 0]);
-      else {
-        this.lastSixteens.push([this.teams[3], {name: "-   "}, 1]);
-        this.setQuarterFinals(3);
-      }
-      if (this.teams.length >= 14)
-        this.lastSixteens.push([this.teams[2], this.teams[13], 0]);
-      else {
-        this.lastSixteens.push([this.teams[2], {name: "-  "}, 1]);
-        this.setQuarterFinals(4);
-      }
-      if (this.teams.length >= 11)
-        this.lastSixteens.push([this.teams[5], this.teams[10], 0]);
-      else {
-        this.lastSixteens.push([this.teams[5], {name: "-     "}, 1]);
-        this.setQuarterFinals(5);
-      }
-      if (this.teams.length >= 10)
-        this.lastSixteens.push([this.teams[6], this.teams[9], 0]);
-      else {
-        this.lastSixteens.push([this.teams[6], {name: "-      "}, 1]);
-        this.setQuarterFinals(6);
-      }
-      if (this.teams.length >= 15)
-        this.lastSixteens.push([this.teams[1], this.teams[14], 0]);
-      else {
-        this.lastSixteens.push([this.teams[1], {name: "- "}, 1]);
-        this.setQuarterFinals(7);
-      }
-    }
-    if (this.spots >= 3) {
-      this.winners = [" - ", "Qualified #3"];
-      this.finals[0] = [{name: "Qualified #1"}, {name: "Qualified #2"}, 0];
-    }
-    if (this.spots >= 4) {
-      this.winners = [];
-      this.finals = [];
-      this.semiFinals = [
-        [{name: "Qualified #1"}, {name: "Qualified #2"}, 0],
-        [{name: "Qualified #3"}, {name: "Qualified #4"}, 0]
-      ];
-    }
+    this.updateMatches();
   },
 
   computed: {
@@ -234,6 +149,97 @@ export default {
   },
 
   methods: {
+    updateMatches() {
+      if (this.teams.length <= 8) {
+        this.quarterFinals = [];
+        if (this.teams.length >= 8)
+          this.quarterFinals.push([this.teams[0], this.teams[7], 0]);
+        else {
+          this.quarterFinals.push([this.teams[0], {name: " -"}, 1]);
+          this.setSemiFinals(0);
+        }
+        if (this.teams.length >= 5)
+          this.quarterFinals.push([this.teams[3], this.teams[4], 0]);
+        else {
+          this.quarterFinals.push([this.teams[3], {name: "    -"}, 1]);
+          this.setSemiFinals(1);
+        }
+        if (this.teams.length >= 6)
+          this.quarterFinals.push([this.teams[2], this.teams[5], 0]);
+        else {
+          this.quarterFinals.push([this.teams[2], {name: "   -"}, 1]);
+          this.setSemiFinals(2);
+        }
+        if (this.teams.length >= 7)
+          this.quarterFinals.push([this.teams[1], this.teams[6], 0]);
+        else {
+          this.quarterFinals.push([this.teams[1], {name: "  -"}, 1]);
+          this.setSemiFinals(3);
+        }
+      } else { // last 16
+        if (this.teams.length >= 16)
+          this.lastSixteens.push([this.teams[0], this.teams[15], 0]);
+        else {
+          this.lastSixteens.push([this.teams[0], {name: "-"}, 1]);
+          this.setQuarterFinals(0);
+        }
+        if (this.teams.length >= 9)
+          this.lastSixteens.push([this.teams[7], this.teams[8], 0]);
+        else {
+          this.lastSixteens.push([this.teams[7], {name: "-       "}, 1]);
+          this.setQuarterFinals(1);
+        }
+        if (this.teams.length >= 12)
+          this.lastSixteens.push([this.teams[4], this.teams[11], 0]);
+        else {
+          this.lastSixteens.push([this.teams[4], {name: "-    "}, 1]);
+          this.setQuarterFinals(2);
+        }
+        if (this.teams.length >= 13)
+          this.lastSixteens.push([this.teams[3], this.teams[12], 0]);
+        else {
+          this.lastSixteens.push([this.teams[3], {name: "-   "}, 1]);
+          this.setQuarterFinals(3);
+        }
+        if (this.teams.length >= 14)
+          this.lastSixteens.push([this.teams[2], this.teams[13], 0]);
+        else {
+          this.lastSixteens.push([this.teams[2], {name: "-  "}, 1]);
+          this.setQuarterFinals(4);
+        }
+        if (this.teams.length >= 11)
+          this.lastSixteens.push([this.teams[5], this.teams[10], 0]);
+        else {
+          this.lastSixteens.push([this.teams[5], {name: "-     "}, 1]);
+          this.setQuarterFinals(5);
+        }
+        if (this.teams.length >= 10)
+          this.lastSixteens.push([this.teams[6], this.teams[9], 0]);
+        else {
+          this.lastSixteens.push([this.teams[6], {name: "-      "}, 1]);
+          this.setQuarterFinals(6);
+        }
+        if (this.teams.length >= 15)
+          this.lastSixteens.push([this.teams[1], this.teams[14], 0]);
+        else {
+          this.lastSixteens.push([this.teams[1], {name: "- "}, 1]);
+          this.setQuarterFinals(7);
+        }
+      }
+      if (this.spots >= 3) {
+        this.winners = [" - ", "Qualified #3"];
+        this.finals[0] = [{name: "Qualified #1"}, {name: "Qualified #2"}, 0];
+      }
+      if (this.spots >= 4) {
+        this.winners = [];
+        this.finals = [];
+        this.semiFinals = [
+          [{name: "Qualified #1"}, {name: "Qualified #2"}, 0],
+          [{name: "Qualified #3"}, {name: "Qualified #4"}, 0]
+        ];
+      }
+    },
+
     finalNeeded(idx) {
       switch (this.spots) {
       case 0:
@@ -257,8 +263,19 @@ export default {
         next[Math.floor(idx / 2)][idx % 2].name =
         current[idx][1].name;
     },
+
     setQuarterFinals(idx) {
       this.setNextRound(idx, this.lastSixteens, this.quarterFinals);
+      // For consolation event, tell parent about the losing teams
+      let losers = [];
+      this.lastSixteens.forEach(match => {
+        if (match[2] === 1 && !this.isFictiveName(match[1].name))
+          losers.push(match[1]);
+        if (match[2] === -1)
+          losers.push(match[0]);
+      });
+      this.$emit('loser', losers);
+
     },
     setSemiFinals(idx) {
       this.setNextRound(idx, this.quarterFinals, this.semiFinals);
@@ -352,6 +369,10 @@ export default {
     isFictiveName(name) {
       return /^[- ]+$/.test(name);
     }
+  },
+
+  watch: {
+    teams: 'updateMatches'
   }
 }
 </script>

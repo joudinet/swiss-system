@@ -6,7 +6,7 @@
     <button @click="prevRound()" class="previous" :disabled="round < 2"
             v-if="started && !finalsMode">Tour précédent</button>
     <template v-if="!over">
-      <button class="start" @click="start()" :disabled="teams.length === 0"
+      <button class="start" @click="start()" :disabled="teams.length < spots"
               v-if="!started">Démarrer ({{ teams.length }})</button>
       <button @click="nextRound()" :disabled="missingResults"
               v-if="started">Tour suivant</button>
@@ -36,6 +36,15 @@
         <label for="spots">Nb. équipes qualifiées :</label>
         <input id="spots" v-model="spots"
                type="number" name="spots" />
+      </div>
+      <div class="config">
+        Consolante :
+        <input type="radio" id="conso" :value="true"
+               v-model="wantConso" />
+        <label for="conso">Oui</label>
+        <input type="radio" id="noConso" :value="false"
+               v-model="wantConso" />
+        <label for="NoConso">Non</label>
       </div>
       <div class="config">
         <label for="nbFields">Nb. terrains disponibles :</label>
@@ -109,7 +118,10 @@
       <template v-else>
         <template v-if="!showResults">
           <Playoffs :teams="playoffsTeams" :spots="remainingSpots"
-                    @results="getFinalStandings"/>
+                    :title="playoffsTitle"
+                    @results="getFinalStandings" @loser="setSilverTeams"/>
+          <Playoffs :teams="silverTeams" :title='"Consolante"'
+                    @results="getSilverStandings" v-if="doConsolationBracket"/>
         </template>
         <template v-else>
           <Standings :teams="finalStandings"
@@ -169,22 +181,26 @@ export default {
       over: false,
       playoffsOver: false,
       showResults: false,
+      wantConso: true,
       teams: [],
       playoffsTeams: [],
+      silverTeams: [],
       finalStandings: [],
+      silverStandings: [],
       remainingSpots: 0,
-      spots: 8,
+      spots: 11,
       finalsMode: false,
       gameType: "Main draw",
       graph: null,
       matches: [],
       maxRounds: 4,
       nbFields: 4,
-      matchDuration: 25,
+      matchDuration: 30,
       name: "",
       score: 0
     };
   },
+
   mounted() {
     if (localStorage.getItem('teams')) {
       try {
@@ -194,7 +210,7 @@ export default {
           Math.floor(Number(localStorage.getItem('max-rounds'))) || 4;
         this.gameType = localStorage.getItem('game-type') || "Main draw";
         this.spots =
-          Math.floor(Number(localStorage.getItem('spots'))) || 8;
+          Math.floor(Number(localStorage.getItem('spots'))) || 11;
       } catch(e) {
         console.warning("error while loading local storage", e.message);
         localStorage.removeItem('teams');
@@ -204,10 +220,12 @@ export default {
         localStorage.removeItem('spots');
       }
       this.started = localStorage.getItem('started') === "true";
+      this.wantConso = localStorage.getItem('want-conso') === "true";
       if (this.round >= this.maxRounds)
         this.over = true;
     }
   },
+
   computed: {
     round() {
       if (this.teams.length === 0)
@@ -220,11 +238,22 @@ export default {
       if (this.nbFields == 0 || this.teams.length === 0)
         return "0";
 
-      let seconds =  (Math.ceil(this.teams.length / 2 / this.nbFields)
-                      * this.maxRounds + ((this.teams.length >= 5)? 3 : 2))
+      let seconds =
+          (Math.ceil(this.teams.length / 2 / this.nbFields) * this.maxRounds
+           + 2 + Math.ceil(Math.max(0, this.spots - 4) / this.nbFields)
+          + (this.wantConso? 1 : 0))
           * this.matchDuration * 60;
       let date = new Date(seconds * 1000);
       return date.toISOString().substr(11,5).replace(/^[0:]+/, "").replace(':', 'h');
+    },
+    doConsolationBracket() {
+      return this.wantConso && this.gameType === "Main draw";
+    },
+    playoffsTitle() {
+      if (this.doConsolationBracket)
+        return "Principale";
+      else
+        return "Phases finales";
     },
     // True iff there is a team with a missing result in the current
     // round
@@ -349,6 +378,7 @@ export default {
       });
       this.matches = sortedMatches;
       localStorage.setItem('game-type', this.gameType);
+      localStorage.setItem('want-conso', this.wantConso);
       localStorage.setItem('started', this.started);
       localStorage.setItem('max-rounds', this.maxRounds);
       localStorage.setItem('spots', this.spots);
@@ -419,6 +449,10 @@ export default {
       if (this.gameType === "Main draw") {
         for (let i = 0; i < Math.min(this.spots, this.teams.length); i++)
           this.playoffsTeams.push(this.rankedTeams[i]);
+
+        this.silverTeams = this.rankedTeams.slice(this.spots);
+        for (let n = 8 - this.silverTeams.length; n > 0; --n)
+          this.silverTeams.unshift({ name: "Loser #" + n });
       } else { // Qualif
         let remaining = this.spots;
         let nbWins = this.nbWins(this.rankedTeams[0]);
@@ -426,7 +460,6 @@ export default {
           const pool = this.rankedTeams.filter(team => {
             return this.nbWins(team) == nbWins;
           });
-          console.log(pool);
           if (remaining < pool.length) {
             this.playoffsTeams = pool;
             this.remainingSpots = remaining;
@@ -441,6 +474,12 @@ export default {
           this.showFinalStandings();
         }
       }
+    },
+
+    setSilverTeams(losers) {
+      this.silverTeams = losers.concat(this.rankedTeams.slice(this.spots));
+      for (let n = 8 - this.silverTeams.length; n > 0; --n)
+        this.silverTeams.unshift({ name: "Loser #" + n });
     },
 
     getFinalStandings(playoffsResults) {
@@ -495,6 +534,9 @@ export default {
     },
     showFinalStandings() {
       this.showResults = true;
+    },
+    getSilverStandings(silverResults) {
+      console.log("SilverResults", silverResults);
     },
     reset() {
       console.log("Reset.");

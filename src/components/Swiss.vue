@@ -414,9 +414,9 @@ export default {
                 Math.abs(this.nbWins(team) - this.nbWins(this.teams[j]));
             const score_diff = Math.abs(i - j);
             if (win_diff === 0)
-              weight = 100 + score_diff;
+              weight = 140 + score_diff;
             else if (win_diff === 1)
-              weight = 60 + score_diff;
+              weight = 100 + score_diff;
             this.graph.push([i, j, weight]);
           }
         }

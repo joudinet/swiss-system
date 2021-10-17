@@ -713,7 +713,7 @@ div.config {
 
 .config input,
 input.score {
-    width: 3em;
+    width: 4em;
 }
 
 main input:focus,

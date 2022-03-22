@@ -119,12 +119,13 @@
         <template v-if="!showResults">
           <Playoffs :teams="playoffsTeams" :spots="remainingSpots"
                     :title="playoffsTitle"
-                    @results="getFinalStandings" @loser="setSilverTeams"/>
+                    @ranking="getFinalStandings" @loser="setSilverTeams"
+                    @results="setAllResults"/>
           <Playoffs :teams="silverTeams" :title='"Consolante"'
-                    @results="getSilverStandings" v-if="doConsolationBracket"/>
+                    @ranking="getSilverStandings" v-if="doConsolationBracket"/>
         </template>
         <template v-else>
-          <Standings :teams="finalStandings"
+          <Standings :teams="finalStandings" :results="allResults"
                      :spots="gameType === 'Main draw'? 0 : this.spots" />
         </template>
       </template> <!-- finals -->
@@ -193,6 +194,7 @@ export default {
       gameType: "Main draw",
       graph: null,
       matches: [],
+      allResults: [],
       maxRounds: 4,
       nbFields: 4,
       matchDuration: 30,
@@ -518,20 +520,37 @@ export default {
               return {rank: 9 + nDirectQualified, name: team};
           }));
       }
-      let nbWins = this.nbWins(this.rankedTeams[this.finalStandings.length]);
-      let rank = this.finalStandings.length + 1;
-      while (nbWins >= 0 && this.finalStandings.length < this.teams.length) {
-        const pool = this.rankedTeams.filter(team => {
-          return this.nbWins(team) === nbWins;
-        }).map(team => {
-          return {rank: rank, name: team.name};
-        });
-        if (pool.length > 0)
-          this.finalStandings = this.finalStandings.concat(pool);
-        rank = rank + pool.length;
-        nbWins = nbWins - 1;
+      if (this.finalStandings.length < this.rankedTeams.length) {
+        let nbWins = this.nbWins(this.rankedTeams[this.finalStandings.length]);
+        let rank = this.finalStandings.length + 1;
+        while (nbWins >= 0 && this.finalStandings.length < this.teams.length) {
+          const pool = this.rankedTeams.filter(team => {
+            return this.nbWins(team) === nbWins;
+          }).map(team => {
+            return {rank: rank, name: team.name};
+          });
+          if (pool.length > 0)
+            this.finalStandings = this.finalStandings.concat(pool);
+          rank = rank + pool.length;
+          nbWins = nbWins - 1;
+        }
       }
     },
+
+    // Set the allResults variable to contain every played matches in
+    // the format [[winner, loser]...].
+    setAllResults(playoffsMatches) {
+      this.allResults = [];
+      for (let i = 0; i < this.round; ++i)
+        this.rankedTeams.map(team => {
+          if (team.matches[i].win === 1)
+            this.allResults.push([team.name,
+                                  this.teams[team.matches[i].against].name]);
+        });
+      this.allResults = this.allResults.concat(playoffsMatches);
+      console.log("allResults", this.allResults);
+    },
+
     showFinalStandings() {
       this.showResults = true;
     },

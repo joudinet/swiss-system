@@ -113,7 +113,7 @@ export default {
     title: { type: String, default: "Phases finales" },
     spots: { type: Number, default: 0 }
   },
-  emits: [ 'loser', 'results' ],
+  emits: [ 'loser', 'ranking', 'results' ],
   data() {
     return {
       lastSixteens: [],
@@ -144,7 +144,7 @@ export default {
       return this.teams.length > 8;
     },
     semifinalNeeded() {
-      return this.spots < 4;
+      return this.spots < 4; // TODO: when there are 6 teams for 3 spots.
     },
   },
 
@@ -307,7 +307,7 @@ export default {
           });
         }
 
-        this.$emit('results', ranks);
+        this.$emit('ranking', ranks);
       }
     },
     setFinals(idx) {
@@ -335,8 +335,10 @@ export default {
       // 2nd
       if (this.finals[0][2] === -1 || this.spots === 3)
         ranks.push(this.finals[0][0].name);
+
       if (this.finals[0][2] === 1 || this.spots === 3)
         ranks.push(this.finals[0][1].name);
+
       // 3rd and 4rd
       ranks.push(this.winners[1]);
       if (this.finals[1][2] === -1)
@@ -364,10 +366,61 @@ export default {
         });
       }
 
-      this.$emit('results', ranks);
+      this.$emit('ranking', ranks);
+
+      // Publish all results
+      this.publishAllResults();
     },
+
     isFictiveName(name) {
       return /^[- ]+$/.test(name);
+    },
+
+    publishAllResults() {
+      const results = [];
+
+      // Last Sixteens
+      if (this.teams.length > 8) {
+        this.lastSixteens.forEach( match => {
+          if (match[2] === 1) {
+            if (!this.isFictiveName(match[1].name))
+              results.push([match[0].name, match[1].name]);
+          } else
+            results.push([match[1].name, match[0].name]);
+        });
+      }
+
+      // Quarter finals
+      this.quarterFinals.forEach( match => {
+        if (match[2] === 1) {
+          if (!this.isFictiveName(match[1].name))
+            results.push([match[0].name, match[1].name]);
+        } else
+            results.push([match[1].name, match[0].name]);
+      });
+
+      // Semi finals
+      this.semiFinals.forEach( match => {
+        if (match[2] === 1) {
+          if (!this.isFictiveName(match[1].name))
+            results.push([match[0].name, match[1].name]);
+        } else
+            results.push([match[1].name, match[0].name]);
+      });
+
+      // Loser final
+      if (this.finals[1][2] === 1)
+        results.push([this.finals[1][0].name, this.finals[1][1].name]);
+      else
+        results.push([this.finals[1][1].name, this.finals[1][0].name]);
+
+      // Final
+      if (this.finals[0][2] === 1)
+        results.push([this.finals[0][0].name, this.finals[0][1].name])
+      else
+        results.push([this.finals[0][1].name, this.finals[0][0].name])
+
+      this.$emit('results', results);
     }
   },
 

@@ -486,7 +486,6 @@ export default {
 
     getFinalStandings(playoffsResults) {
       this.playoffsOver = true;
-      console.log(playoffsResults);
       if (this.gameType === "Main draw")
         this.finalStandings = playoffsResults.map((team, n) => {
           if (n < 4)
@@ -548,7 +547,6 @@ export default {
                                   this.teams[team.matches[i].against].name]);
         });
       this.allResults = this.allResults.concat(playoffsMatches);
-      console.log("allResults", this.allResults);
     },
 
     showFinalStandings() {

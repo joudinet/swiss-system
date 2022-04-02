@@ -214,7 +214,7 @@ export default {
         this.spots =
           Math.floor(Number(localStorage.getItem('spots'))) || 11;
       } catch(e) {
-        console.warning("error while loading local storage", e.message);
+        console.warn("error while loading local storage", e.message);
         localStorage.removeItem('teams');
         localStorage.removeItem('matches');
         localStorage.removeItem('max-rounds');
@@ -358,7 +358,6 @@ export default {
         this.score = this.teams[this.teams.length - 1].score;
         this.addTeam();
       }
-      console.log("Start tournament. Do initial pairing according to score.");
       this.started = true;
       this.graph = [];
       for (var i = 0; i < this.teams.length / 2; i++) {
@@ -556,10 +555,11 @@ export default {
       console.log("SilverResults", silverResults);
     },
     reset() {
-      console.log("Reset.");
       this.started = false;
       this.over = false;
       this.finalsMode = false;
+      this.playoffsOver = false;
+      this.showResults = false;
       this.teams.forEach(team => this.$delete(team, 'matches'));
       this.matches = [];
       localStorage.setItem('started', this.started);

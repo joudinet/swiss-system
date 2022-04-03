@@ -25,8 +25,9 @@ export default {
   },
   methods: {
     downloadToCSV() {
-      const csv = "\ufeff" + unparse(this.results);
-      const blob = new Blob([csv], {type: "application/csvcharset=utf-8"});
+      const bom = "\uFEFF";
+      const csv = bom + unparse(this.results, { delimiter: ";" });
+      const blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
       saveAs(blob, "results.csv");
     }
   }

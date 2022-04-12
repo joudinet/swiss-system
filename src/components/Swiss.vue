@@ -405,19 +405,21 @@ export default {
         console.warn("missing some match results");
         return;
       }
-      // Build a graph where edges are weighted according to win differences.
+      // Build a graph where edges are weighted according to win
+      // differences, then according to rank differences (to advantage
+      // best seeding among the same win pool).
       this.graph = [];
       this.teams.forEach( (team, i) => {
         for (let j = i + 1; j < this.teams.length; j++) {
           if (!team.matches.find(m => m.against === j)) {
-            let weight = 1;
             const win_diff =
                 Math.abs(this.nbWins(team) - this.nbWins(this.teams[j]));
-            const score_diff = Math.abs(i - j);
+            const rank_diff = (i - j) * (i - j);
+            let weight = rank_diff;
             if (win_diff === 0)
-              weight = 140 + score_diff;
+              weight += 14000;
             else if (win_diff === 1)
-              weight = 100 + score_diff;
+              weight += 10000;
             this.graph.push([i, j, weight]);
           }
         }

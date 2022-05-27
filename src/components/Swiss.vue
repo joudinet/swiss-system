@@ -450,8 +450,39 @@ export default {
       this.finalsMode = true;
       this.playoffsTeams = [];
       if (this.gameType === "Main draw") {
-        for (let i = 0; i < Math.min(this.spots, this.teams.length); i++)
-          this.playoffsTeams.push(this.rankedTeams[i]);
+        let x = Math.min(this.spots, this.teams.length);
+        if (this.spots < 4)
+          x = 4 - this.spots;
+        if (this.spots < 8)
+          x = 8 - this.spots;
+        else
+          x = 16 - this.spots;
+        this.playoffsTeams = this.rankedTeams.slice(0, x);
+        // Avoid already played matches between [x, this.spots) players
+        let graph = [];
+        const firstTeams = this.rankedTeams.slice(x, this.spots);
+        firstTeams.forEach( (team, i) => {
+          for (let j = i + 1; j < firstTeams.length; j++)
+            if (!team.matches.find(m => {
+              return j ===
+                firstTeams.findIndex((t) => t === this.teams[m.against]);
+            })) {
+              const weight = 10000 + (i - j) * (i - j);
+              graph.push([i, j, weight]);
+            } else {
+              graph.push([i, j, 1]);
+              }
+        });
+        let pairings = Blossom(graph);
+        let lastTeams = [];
+        pairings.forEach((j, i) => {
+          if (j !== -1 && i < j) {
+            this.playoffsTeams.push(firstTeams[i]);
+            lastTeams.push(firstTeams[j]);
+          }
+        });
+        lastTeams.reverse();
+        this.playoffsTeams.push(...lastTeams);
 
         this.silverTeams = this.rankedTeams.slice(this.spots);
         for (let n = 8 - this.silverTeams.length; n > 0; --n)

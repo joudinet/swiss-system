@@ -146,8 +146,8 @@
         </thead>
         <tbody>
           <tr v-for="(team, n) in rankedTeams" :key="team.name" style="text-align:center">
-            <td>{{(n > 0 && nbWins(team) === nbWins(rankedTeams[n-1]) && solkoff(team) === solkoff(rankedTeams[n-1]) && cumulative(team) === cumulative(rankedTeams[n-1]))? '-' : n + 1}}</td>
-            <td>{{team.name}}</td>
+            <td>{{(n > 0 && nbWins(team) === nbWins(rankedTeams[n-1]) && solkoff(team) >= solkoff(rankedTeams[n-1]) && cumulative(team) >= cumulative(rankedTeams[n-1]))? '-' : n + 1}}</td>
+            <td>E{{team.seeding}} - {{team.name}}</td>
             <td>{{nbWins(team)}}</td>
             <td>{{solkoff(team)}}</td>
             <td>{{cumulative(team)}}</td>
@@ -182,7 +182,7 @@ export default {
       over: false,
       playoffsOver: false,
       showResults: false,
-      wantConso: true,
+      wantConso: false,
       teams: [],
       playoffsTeams: [],
       silverTeams: [],
@@ -279,9 +279,14 @@ export default {
         const solkoff1 = this.solkoff(t1);
         const solkoff2 = this.solkoff(t2);
         if (win1 === win2) {
-          if (solkoff1 === solkoff2)
-            return this.cumulative(t2) - this.cumulative(t1);
-          return solkoff2 - solkoff1;
+          if (win1 === this.round) {
+            // Sort by seeding for perfect score teams
+            return t1.seeding - t2.seeding;
+          } else {
+            if (solkoff1 === solkoff2)
+              return this.cumulative(t2) - this.cumulative(t1);
+            return solkoff2 - solkoff1;
+          }
         }
         return win2 - win1;
       });
@@ -358,6 +363,9 @@ export default {
         this.score = this.teams[this.teams.length - 1].score;
         this.addTeam();
       }
+      this.teams.forEach((team, index) => {
+        this.teams[index].seeding = index + 1
+      });
       this.started = true;
       this.graph = [];
       for (var i = 0; i < this.teams.length / 2; i++) {

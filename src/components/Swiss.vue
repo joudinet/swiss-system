@@ -560,8 +560,17 @@ export default {
           }));
       }
       if (this.finalStandings.length < this.rankedTeams.length) {
-        let nbWins = this.nbWins(this.rankedTeams[this.finalStandings.length]);
+        let nbWins = this.nbWins(this.rankedTeams[this.finalStandings.length - 1]);
         let rank = this.finalStandings.length + 1;
+        while (this.finalStandings.length <= this.teams.length &&
+               nbWins === this.nbWins(this.rankedTeams[this.finalStandings.length])) {
+          this.finalStandings.push({
+            rank: rank,
+            name: this.rankedTeams[this.finalStandings.length].name
+          });
+        }
+        nbWins = nbWins - 1;
+        rank = this.finalStandings.length + 1;
         while (nbWins >= 0 && this.finalStandings.length < this.teams.length) {
           const pool = this.rankedTeams.filter(team => {
             return this.nbWins(team) === nbWins;

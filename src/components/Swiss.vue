@@ -421,8 +421,10 @@ export default {
         for (let j = i + 1; j < this.teams.length; j++) {
           if (!team.matches.find(m => m.against === j)) {
             const win_diff =
-                Math.abs(this.nbWins(team) - this.nbWins(this.teams[j]));
-            const rank_diff = (i - j) * (i - j);
+                  Math.abs(this.nbWins(team) - this.nbWins(this.teams[j]));
+            const rank_i = this.rankedTeams.findIndex((t) => t.name === team.name);
+            const rank_j = this.rankedTeams.findIndex((t) => t.name === this.teams[j].name);
+            const rank_diff = (rank_i - rank_j) * (rank_i - rank_j);
             let weight = rank_diff;
             if (win_diff === 0)
               weight += 14000;

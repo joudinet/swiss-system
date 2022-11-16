@@ -460,6 +460,7 @@ export default {
       this.finalsMode = true;
       this.playoffsTeams = [];
       if (this.gameType === "Main draw") {
+        // x is the number of teams already qualified for the second round
         let x = Math.min(this.spots, this.teams.length);
         if (this.spots < 4)
           x = 4 - this.spots;
@@ -495,8 +496,9 @@ export default {
         this.playoffsTeams.push(...lastTeams);
 
         this.silverTeams = this.rankedTeams.slice(this.spots);
-        for (let n = 8 - this.silverTeams.length; n > 0; --n)
+        for (let n = (this.spots - x) / 2; n > 0; --n)
           this.silverTeams.unshift({ name: "Loser #" + n });
+        this.silverMaxTeams = this.silverTeams.length;
       } else { // Qualif
         let remaining = this.spots;
         let nbWins = this.nbWins(this.rankedTeams[0]);
@@ -521,8 +523,12 @@ export default {
     },
 
     setSilverTeams(losers) {
-      this.silverTeams = losers.concat(this.rankedTeams.slice(this.spots));
-      for (let n = 8 - this.silverTeams.length; n > 0; --n)
+      this.silverTeams = losers.sort((t1, t2) => {
+        return this.rankedTeams.findIndex((t) => t.name === t1.name) -
+          this.rankedTeams.findIndex((t) => t.name === t2.name);
+      }).concat(this.rankedTeams.slice(this.spots));
+
+      for (let n = this.silverMaxTeams - this.silverTeams.length; n > 0; --n)
         this.silverTeams.unshift({ name: "Loser #" + n });
     },
 
@@ -604,7 +610,7 @@ export default {
       this.showResults = true;
     },
     getSilverStandings(silverResults) {
-      console.log("SilverResults", silverResults);
+      console.log("SilverStandings", silverResults);
     },
     reset() {
       this.started = false;

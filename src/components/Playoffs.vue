@@ -5,21 +5,21 @@
     <ul class="round round-1" v-if="hasLast16">
       <template v-for="(p, idx) in lastSixteens">
         <li :key="p[0].name">
-          <input :id="'r0' + p[0].name" type="radio"
+          <input :id="title + '-r0-' + p[0].name" type="radio"
                  :name="p[0].name"
                  @change="setQuarterFinals(idx)"
                  v-model.number="p[2]" :value="1"/>
-          <label :for="'r0' + p[0].name"
+          <label :for="title + '-r0-' + p[0].name"
                  :class="{won: p[2] === 1, lost: p[2] === -1}"
                  >{{ p[0].name }}</label>
         </li>
         <li :key="p[1].name">
-          <input :id="'r0' + p[1].name" type="radio"
+          <input :id="title + '-r0-' + p[1].name" type="radio"
                  :name="p[1].name"
                  @change="setQuarterFinals(idx)"
                  v-model.number="p[2]" :value="-1"
                  v-show="!isFictiveName(p[1].name)"/>
-          <label :for="'r0' + p[1].name"
+          <label :for="title + '-r0-' + p[1].name"
                  :class="{won: p[2] === -1, lost: p[2] === 1}"
                  >{{ p[1].name }}</label>
         </li>
@@ -28,21 +28,21 @@
     <ul class="round" :class="hasLast16 ? 'round-2' : 'round-1'">
       <template v-for="(p, idx) in quarterFinals">
         <li :key="p[0].name">
-          <input :id="'r1' + p[0].name" type="radio"
+          <input :id="title + '-r1-' + p[0].name" type="radio"
                  :name="p[0].name"
                  @change="setSemiFinals(idx)"
                  v-model.number="p[2]" :value="1"/>
-          <label :for="'r1' + p[0].name"
+          <label :for="title + '-r1-' + p[0].name"
                  :class="{won: p[2] === 1, lost: p[2] === -1}"
                  >{{ p[0].name }}</label>
         </li>
         <li :key="p[1].name">
-          <input :id="'r1' + p[1].name" type="radio"
+          <input :id="title + '-r1-' + p[1].name" type="radio"
                  :name="p[1].name"
                  @change="setSemiFinals(idx)"
                  v-model.number="p[2]" :value="-1"
                  v-show="!isFictiveName(p[1].name)"/>
-          <label :for="'r1' + p[1].name"
+          <label :for="title + '-r1-' + p[1].name"
                  :class="{won: p[2] === -1, lost: p[2] === 1}"
                  >{{ p[1].name }}</label>
         </li>
@@ -150,6 +150,22 @@ export default {
 
   methods: {
     updateMatches() {
+      this.lastSixteens = [];
+      this.quarterFinals = [
+        [{name: "Winner 1st 8th-final"}, {name: "Winner 2nd 8th-final"}, 0],
+        [{name: "Winner 3rd 8th-final"}, {name: "Winner 4th 8th-final"}, 0],
+        [{name: "Winner 5th 8th-final"}, {name: "Winner 6th 8th-final"}, 0],
+        [{name: "Winner 7th 8th-final"}, {name: "Winner 8th 8th-final"}, 0]
+      ];
+      this.semiFinals = [
+        [{name: "Winner 1st quarterfinal"}, {name: "Winner 2nd quarterfinal"}, 0],
+        [{name: "Winner 3rd quarterfinal"}, {name: "Winner 4th quarterfinal"}, 0]
+      ];
+      this.finals = [
+        [{name: "Winner 1st semifinal"}, {name: "Winner 2nd semifinal"}, 0],
+        [{name: "Loser 1st semifinal"}, {name: "Loser 2nd semifinal"}, 0]
+      ];
+      this.winners = ["Winner", "3rd place"];
       if (this.teams.length <= 8) {
         this.quarterFinals = [];
         if (this.teams.length >= 8)

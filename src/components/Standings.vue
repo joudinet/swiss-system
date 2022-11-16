@@ -1,8 +1,11 @@
 <template>
 <div id="standings">
   <h2>Classement final</h2>
-  <!-- TODO: add a button to export all results -->
-  <button @click="downloadToCSV">Télécharger les résultats</button>
+  <p>
+    Télécharger les résultats au format
+    <button @click="downloadToCSV">CSV</button>
+    <button @click="downloadToTSV">TSV</button>
+  </p>
   <ol>
     <li v-for="(team, n) in teams" :key="team.name"
         :value="team.rank"
@@ -25,10 +28,15 @@ export default {
   },
   methods: {
     downloadToCSV() {
-      const bom = "\uFEFF";
-      const csv = bom + unparse(this.results, { delimiter: ";" });
+      const csv = unparse(this.results, { delimiter: "," });
       const blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
       saveAs(blob, "results.csv");
+    },
+    downloadToTSV() {
+      const tsv = unparse(this.results, { delimiter: "\t" });
+      const blob = new Blob([tsv],
+                            {type: "text/tab-separated-values;charset=utf-8"});
+      saveAs(blob, "results.tsv");
     }
   }
 }
